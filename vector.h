@@ -9,15 +9,14 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
-
 /**
  * @struct Vector3
  * @brief Represents a 3D vector with x, y, and z components.
  */
 typedef struct Vector3 {
-    double x;
-    double y;
-    double z;
+  double x;
+  double y;
+  double z;
 } Vector3;
 
 /**
@@ -40,15 +39,17 @@ double vec3_magnitude(Vector3 v);
  *
  * This function normalizes a given 3D vector, making its length equal to 1.
  *
- * @param v Pointer to the Vector3 structure representing the vector to be normalized.
+ * @param v Pointer to the Vector3 structure representing the vector to be
+ * normalized.
  */
-void vec3_normalize(Vector3 *v);
+void vec3_normalize(Vector3* v);
 
 /**
  * Normalizes a Vector3.
  *
- * This function takes a Vector3 as input and returns a normalized version of it.
- * The normalized vector has the same direction as the original vector, but its length is 1.
+ * This function takes a Vector3 as input and returns a normalized version of
+ * it. The normalized vector has the same direction as the original vector, but
+ * its length is 1.
  *
  * @param v The Vector3 to be normalized.
  * @return The normalized Vector3.
@@ -132,8 +133,8 @@ double* vec3_to_array(Vector3* vec);
  * @brief Represents a 2D vector with x and y components.
  */
 typedef struct Vector2 {
-    double x; 
-    double y; 
+  double x;
+  double y;
 } Vector2;
 
 /**
@@ -158,7 +159,7 @@ double vec2_magnitude(Vector2 v);
  *
  * @param v The vector to be normalized.
  */
-void vec2_normalize(Vector2 *v);
+void vec2_normalize(Vector2* v);
 
 /**
  * Calculates the normalized vector of a given Vector2.
@@ -206,7 +207,8 @@ Vector2 vec2_div(Vector2 a, Vector2 b);
 /**
  * @brief Scales a 2D vector by a given scale factor.
  *
- * This function multiplies both the x and y components of the vector by the given scale factor.
+ * This function multiplies both the x and y components of the vector by the
+ * given scale factor.
  *
  * @param scale The scale factor to multiply the vector by.
  * @return The scaled vector.
@@ -220,6 +222,5 @@ Vector2 vec2_scale(Vector2 v, double scale);
  * @return The dot product of the vector.
  */
 double vec2_dot_prod(Vector2 a, Vector2 b);
-
 
 #endif
