@@ -3,12 +3,13 @@
 #include <stdbool.h>
 #include <math.h>
 #include "parametric.h"
+#include "vector.h"
 #include "matrix.h"
 #include "camera.h"
 #include "lightmodel.h"
 #include "FPToolkit.h"
 
-static const bool BACKFACE_CULLING = false; //TODO: Make this an option that can be passed in
+static const bool BACKFACE_CULLING = false; //TODO: Make this an option that can be passed in?
 
 double NORMAL_DELTA = 0.001;
 
@@ -32,25 +33,26 @@ void draw_parametric_object_3d(ParametricObject3D object,
             double normalized_z_dist = (camera_point.z - cam.near_clip_plane) / (cam.far_clip_plane - cam.near_clip_plane);
             Vector2 pixel_location = to_window_coordinates(to_camera_screen_space(camera_point, cam), width, height);
             
-            if(BACKFACE_CULLING){ //TODO: Make this more optimized. View vector can be reused in phong lighting. The normal calculation should not be recomputed later if this is true
-                Vector3 tangent_a = vec3_normalized(vec3_sub(mat4_mult_point(object.f(u, v + NORMAL_DELTA), object.transform), point));
-                Vector3 tangent_b = vec3_normalized(vec3_sub(mat4_mult_point(object.f(u + NORMAL_DELTA, v), object.transform), point));
-                Vector3 normal = vec3_cross_prod(tangent_a, tangent_b);
-                Vector3 view_vec = vec3_normalized(vec3_sub(cam.eye, point));
-                if(vec3_dot_prod(normal, view_vec) < 0) {
-                    continue;
-                    G_rgb(1, 0, 0);
-                    goto draw;
-                } //cull if cant see
-
-            }
 
             if(normalized_z_dist >  z_buffer[(int)pixel_location.x][(int)pixel_location.y]) continue;
 
             z_buffer[(int)pixel_location.x][(int)pixel_location.y] = normalized_z_dist;
 
+            Vector3 tangent_a;
+            Vector3 tangent_b;
+            Vector3 normal;
+            if(BACKFACE_CULLING){ //TODO: Make this more optimized. View vector can be reused in phong lighting.
+                tangent_a = vec3_normalized(vec3_sub(mat4_mult_point(object.f(u, v + NORMAL_DELTA), object.transform), point));
+                tangent_b = vec3_normalized(vec3_sub(mat4_mult_point(object.f(u + NORMAL_DELTA, v), object.transform), point));
+                normal = vec3_cross_prod(tangent_a, tangent_b);
+                Vector3 view_vec = vec3_normalized(vec3_sub(cam.eye, point));
+                if(vec3_dot_prod(normal, view_vec) < 0) {
+                    continue; //cull if cant see
+                } 
+
+            }
             if(mode == UNLIT){
-                G_rgb(object.material.base_color.x, object.material.base_color.y, object.material.base_color.z);
+                G_rgb(SPREAD_COL3(object.material.base_color));
             } else if(mode == UV){
                 double u_range = object.u_end - object.u_start;
                 double v_range = object.v_end - object.v_start;
@@ -61,19 +63,21 @@ void draw_parametric_object_3d(ParametricObject3D object,
                 G_rgb(brightness, brightness, brightness);
             } else{
                 /* Do lighting calculations */
-                Vector3 tangent_a = vec3_normalized(vec3_sub(mat4_mult_point(object.f(u, v + NORMAL_DELTA), object.transform), point));
-                Vector3 tangent_b = vec3_normalized(vec3_sub(mat4_mult_point(object.f(u + NORMAL_DELTA, v), object.transform), point));
-                Vector3 normal = vec3_cross_prod(tangent_a, tangent_b);
+                if(!BACKFACE_CULLING){ //If backface culling is true, normal is already computed
+                    tangent_a = vec3_normalized(vec3_sub(mat4_mult_point(object.f(u, v + NORMAL_DELTA), object.transform), point));
+                    tangent_b = vec3_normalized(vec3_sub(mat4_mult_point(object.f(u + NORMAL_DELTA, v), object.transform), point));
+                    normal = vec3_cross_prod(tangent_a, tangent_b);
+                }
 
                 if(mode == NORMAL){
-                    G_rgb(normal.x, normal.y, normal.z);
+                    G_rgb(SPREAD_COL3(normal));
                 } else if (mode == LIT){
-                    Vector3 col = phong_lighting(point, normal, cam, object.material, lights, num_lights);
-                    G_rgb(col.x, col.y, col.z);
+                    Color3 col = phong_lighting(point, normal, cam, object.material, lights, num_lights);
+                    G_rgb(SPREAD_COL3(col));
                 }
             }
             draw:
-            G_pixel(pixel_location.x, pixel_location.y);
+            G_pixel(SPREAD_VEC2(pixel_location));
         }
     }
 }

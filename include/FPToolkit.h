@@ -13,6 +13,8 @@ extern int (*G_rgb)(double r, double g, double b);
 
 extern int (*G_pixel)(double x, double y);
 
+extern int (* G_get_pixel) (double x, double y) ;
+
 extern int (*G_line)(double start_x, double start_y, double end_x, double end_y);
 
 extern int (*G_display_image)();

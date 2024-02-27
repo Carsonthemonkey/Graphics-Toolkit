@@ -10,14 +10,25 @@
 #define VECTOR_H
 #include <stdbool.h>
 
+//These allows vectors to be used for FPToolkit args more easily
+#define SPREAD_VEC3(v) (v).x, (v).y, (v).z
+#define SPREAD_VEC2(v) (v).x, (v).y
+
 /**
  * @struct Vector3
  * @brief Represents a 3D vector with x, y, and z components.
  */
-typedef struct Vector3 {
-    double x;
-    double y;
-    double z;
+typedef union Vector3 {
+    struct{
+        double x;
+        double y;
+        double z;
+    };
+    struct {
+        double r;
+        double g;
+        double b;
+    };
 } Vector3;
 
 extern const Vector3 VEC3_ZERO, VEC3_FORWARD, VEC3_BACK, VEC3_UP, VEC3_DOWN, VEC3_LEFT, VEC3_RIGHT;

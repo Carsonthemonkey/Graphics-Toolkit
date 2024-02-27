@@ -11,7 +11,7 @@ static const int LIGHT_GIZMO_RADIUS = 7;
 const double AMBIENT = 0.2;
 
 Vector3 phong_lighting(Vector3 position, Vector3 normal, Camera cam, PhongMaterial material, PhongLight* lights, int num_lights){
-    Vector3 result = vec3_scale(material.base_color, AMBIENT);
+    Color3 result = vec3_scale(material.base_color, AMBIENT);
     for(int l = 0; l < num_lights; l++){
         PhongLight light = lights[l];
 
@@ -19,7 +19,7 @@ Vector3 phong_lighting(Vector3 position, Vector3 normal, Camera cam, PhongMateri
         Vector3 light_dir = vec3_normalized(vec3_sub(light.position, position));
         double dot_prod = vec3_dot_prod(light_dir, normal);
         if(dot_prod < 0) continue;
-        Vector3 diffuse = vec3_mult(vec3_scale(light.diffuse, dot_prod), material.diffuse);
+        Color3 diffuse = vec3_mult(vec3_scale(light.diffuse, dot_prod), material.diffuse);
         result = vec3_add(result, diffuse);
 
         /* Specular */
@@ -27,7 +27,7 @@ Vector3 phong_lighting(Vector3 position, Vector3 normal, Camera cam, PhongMateri
         Vector3 view_vec = vec3_normalized(vec3_sub(cam.eye, position));
         double spec = pow(vec3_dot_prod(reflection, view_vec), material.shininess);
         if(spec < 0) continue;
-        Vector3 specular = vec3_mult(vec3_scale(light.specular, spec), material.specular);
+        Color3 specular = vec3_mult(vec3_scale(light.specular, spec), material.specular);
         result = vec3_add(result, specular);
     }
     return result;
@@ -40,8 +40,8 @@ void draw_light(PhongLight light, Camera cam, int width, int height){
     Vector2 pixel_coords;
     bool visible = point_to_window(&pixel_coords, light.position, cam, width, height);
     if(!visible) return;
-    G_rgb(light.diffuse.x, light.diffuse.y, light.diffuse.z);
-    G_fill_circle(pixel_coords.x, pixel_coords.y, LIGHT_GIZMO_RADIUS);
+    G_rgb(SPREAD_COL3(light.diffuse));
+    G_fill_circle(SPREAD_VEC2(pixel_coords), LIGHT_GIZMO_RADIUS);
     
     for(int a = 0; a < 360; a += 45){
         double rad_angle = to_radians(a);
