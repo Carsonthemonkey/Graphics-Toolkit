@@ -132,6 +132,7 @@ Vector3 param_torus(double u, double v){
     return result;
 }
 
+//TODO: normals inverted, oopsie
 Vector3 param_square_torus(double u, double v){
     Vector3 result;
     double r,x,y,z,n,t;
@@ -146,6 +147,7 @@ Vector3 param_square_torus(double u, double v){
     return result;
 }
 
+//TODO: normals inverted, oopsie
 Vector3 param_twisted_torus(double u, double v){
     int a = 4,
         n = 3,
