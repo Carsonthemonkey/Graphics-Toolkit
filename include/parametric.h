@@ -100,4 +100,24 @@ Vector3 cylinder(double u, double v);
  */
 Vector3 param_torus(double u, double v);
 
+
+/**
+ * @brief Parametric function for a twisted torus
+ * 
+ * @param u The u parameter (0 to 2π for full torus)
+ * @param v The v parameter (0 to 2π for full torus)
+ * @return Vector3 
+ */
+Vector3 param_twisted_torus(double u, double v);
+
+/**
+ * @brief Parametric function for a square torus
+ * 
+ * @param u The u parameter (0 to 2π for full torus)
+ * @param v The v parameter (0 to 2π for full torus)
+ * @return Vector3 
+ */
+Vector3 param_square_torus(double u, double v);
+
+
 #endif
