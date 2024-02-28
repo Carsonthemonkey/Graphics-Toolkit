@@ -89,8 +89,9 @@ Vector3 param_plane(double u, double v);
  * @param v The v parameter
  * @return Vector3 The resulting point on the cylinder
  */
-Vector3 cylinder(double u, double v);
+Vector3 param_cylinder(double u, double v);
 
+extern double TORUS_MINOR_RADIUS;
 /**
  * @brief Parametric function for a torus
  * 
