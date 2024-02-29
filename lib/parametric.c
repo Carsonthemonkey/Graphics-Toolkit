@@ -167,7 +167,7 @@ Vector3 param_square_torus(double u, double v){
     Vector3 result;
     double r,x,y,z,n,t;
     v = -v; 
-    n = 10;   // change this to change the cross section
+    n = 10; // change this to change the cross section
     t = 0;  // change this to change the twist
     r = pow((pow(cos(v),n) + pow(sin(v), n)), (-1/n));
     result.x = (TORUS_MAJOR_RADIUS + TORUS_MINOR_RADIUS * r * cos(v+t*u)) * cos(u); 
