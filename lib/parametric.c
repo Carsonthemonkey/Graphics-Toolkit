@@ -149,8 +149,9 @@ Vector3 param_cylinder(double u, double v){
     return result;
 }
 
-double TORUS_MINOR_RADIUS = 0.3;
+double TORUS_MINOR_RADIUS = .3;
 double TORUS_MAJOR_RADIUS = 1;
+
 
 //TODO: we need some way to be able to specify the major and minor radius here. Hm
 Vector3 param_torus(double u, double v){
@@ -160,3 +161,39 @@ Vector3 param_torus(double u, double v){
     result.z = TORUS_MINOR_RADIUS * sin(u);
     return result;
 }
+
+
+Vector3 param_square_torus(double u, double v){
+    Vector3 result;
+    double r,x,y,z,n,t;
+    v = -v; 
+    n = 10; // change this to change the cross section
+    t = 0;  // change this to change the twist
+    r = pow((pow(cos(v),n) + pow(sin(v), n)), (-1/n));
+    result.x = (TORUS_MAJOR_RADIUS + TORUS_MINOR_RADIUS * r * cos(v+t*u)) * cos(u); 
+    result.y = (TORUS_MAJOR_RADIUS + TORUS_MINOR_RADIUS * r * cos(v+t*u)) * sin(u);
+    result.z = r*sin(v+t*u);
+    return result;
+}
+
+//TODO: normals inverted, oopsie
+Vector3 param_twisted_torus(double u, double v){
+    int a = 4,
+        n = 3,
+        m = 2;
+
+    double  i = (n * u) / 2,
+            j = (m * u) / 2,
+            k = sin(2 * v);
+
+    double  x = (a + cos(i) * sin(v) - sin(i) * k) * cos(j),
+            y = (a + cos(i) * sin(v) - sin(i) * k) * sin(j),
+            z = sin(i) * sin(v) + cos(i) * k;
+
+    Vector3 result;
+    result.x = x;
+    result.y = y;
+    result.z = z;
+    return result;
+};
+
