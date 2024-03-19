@@ -150,7 +150,7 @@ Vector3 param_cylinder(double u, double v){
 }
 
 double TORUS_MINOR_RADIUS = .3;
-double TORUS_MAJOR_RADIUS = 1;
+double TORUS_MAJOR_RADIUS = .3;
 
 
 //TODO: we need some way to be able to specify the major and minor radius here. Hm
