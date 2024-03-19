@@ -25,6 +25,15 @@ extern int (*G_circle)(double x, double y, double radius);
 
 extern int (*G_fill_circle)(double x, double y, double radius);
 
+extern int (*G_point)(double x, double y);
+
+// Saves the current image to a BMP file.
+extern int (*G_save_to_bmp_file)(char *filename);
+
+extern int (*G_save_image_to_file)(char *filename);
+
+// Draws a string at the specified location.
+int (*G_draw_string)(const void *text, double x, double y);
 
 /**
 int G_init_graphics(double width, double height);
@@ -57,8 +66,6 @@ double (*G_y_mouse)(void);
 // Sets the current drawing color using RGB values.
 int (*G_rgb)(double r, double g, double b);
 
-// Draws a point at the specified coordinates.
-int (*G_point)(double x, double y);
 
 // Draws a line between two points.
 int (*G_line)(double x_start, double y_start, double x_end, double y_end);
@@ -75,17 +82,13 @@ int (*G_rectangle)(double x_left, double y_top, double width, double height);
 // Fills a rectangle with the specified corner and dimensions.
 int (*G_fill_rectangle)(double x_left, double y_top, double width, double height);
 
+
 // Fills a polygon defined by arrays of x and y coordinates and the number of points.
 int (*G_fill_polygon)(double *xx, double *yy, double n);
 
 // Draws a polygon defined by arrays of x and y coordinates and the number of points.
 int (*G_polygon)(double *x, double *y, double numpts);
 
-// Draws a string at the specified location.
-int (*G_draw_string)(const void *text, double x, double y);
-
-// Saves the current image to a BMP file.
-int (*G_save_to_bmp_file)(char *filename);
 
 // Displays an image from a BMP file at the specified location.
 int (*G_display_bmp_file)(char filename[], int xoffset, int yoffset);

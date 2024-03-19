@@ -1,6 +1,21 @@
 #ifndef M3D_MATRIX_TOOLS_H
 #define M3D_MATRIX_TOOLS_H
 
+#define SX 0
+#define SY 1
+#define SZ 2
+
+#define RX 3
+#define RY 4
+#define RZ 5
+
+#define TX 6
+#define TY 7
+#define TZ 8
+
+#define NX 9
+#define NY 10
+#define NZ 11
 
 /**
  * Prints the elements of a 4x4 matrix.
