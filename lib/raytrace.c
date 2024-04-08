@@ -8,25 +8,29 @@
 int MAX_BOUNCES = 1;
 
 void raytrace_scene(int width, int height, Camera cam, RaytracedParametricObject3D* objs, int num_objs){
-    double step_x = 1 / (double)width;
-    double step_y = 1 / (double)height;
-    Vector3 tip = {-0.5, -0.5, get_film_distance(cam)};
-    printf("%lf\n", get_film_distance(cam));
-    for(tip.y = -0.5; tip.y < 0.5; tip.y += step_y){
-        for(tip.x = -0.5; tip.x < 0.5; tip.x += step_x){
-            // vec3_print(tip);
-            // Vector3 direction = vec3_normalized(tip);
-            Vector3 ttip = mat4_mult_point(tip, cam.view_matrix); // transform to camera space
-            // G_rgb(ttip.x, ttip.y, 0);
-            // G_pixel((tip.x + 0.5) * width, (tip.y + 0.5) * height);
-            RayHitInfo hit = ray(cam.eye, ttip, 1, objs, num_objs);
-            G_rgb(SPREAD_COL3(hit.color));
-            G_pixel((tip.x + 0.5) * width, (tip.y + 0.5) * height);
+    for(int y = 0; y < height; y++){
+        for(int x = 0; x < width; x++){
+            double film_distance = get_film_distance(cam);
+            Vector3 pixel_film_space = {
+                (x / (double)width) - 0.5,
+                (y / (double)height) - 0.5,
+                film_distance
+            };
+            Vector3 pixel_film_space_normalized = vec3_normalized(pixel_film_space);
+            Vector3 pixel_direction = vec3_sub(mat4_mult_point(pixel_film_space_normalized, cam.inverse_view_matrix), cam.eye);
+            G_rgb(SPREAD_COL3(pixel_direction));
+            G_pixel(x, y);
+            Ray ray = {.origin=cam.eye, .direction=pixel_direction};
+            RayHitInfo hit = raytrace(ray, 1, objs, num_objs);
+            if(hit.location.x != NAN){
+                G_rgb(SPREAD_COL3(hit.color));
+                G_pixel(x, y);
+            }
         }
     }
 }
 
-RayHitInfo ray(Vector3 source, Vector3 tip, int depth, RaytracedParametricObject3D* objs, int num_objs){
+RayHitInfo raytrace(Ray ray, int depth, RaytracedParametricObject3D* objs, int num_objs){
     double closest_t = INFINITY;
     RayHitInfo result = {
         .location={NAN, NAN, NAN},
@@ -36,8 +40,8 @@ RayHitInfo ray(Vector3 source, Vector3 tip, int depth, RaytracedParametricObject
 
     for(int o = 0; o < num_objs; o++){
         RaytracedParametricObject3D object = objs[o];
-        Vector3 tsource = mat4_mult_point(source, object.inverse);
-        Vector3 ttip = mat4_mult_point(tip, object.inverse);
+        Vector3 tsource = mat4_mult_point(ray.origin, object.inverse);
+        Vector3 ttip = mat4_mult_point(ray.direction, object.inverse);
         // x^2 + y^2 + z^2 - 1 = 0
         // (tsrc.x + tdir.x * t)^2 + (tsrc.y + tdir.y * t)^2 + (tsrc.z + tdir.x * z)^2 - 1 = 0
         // Now we need to foil the terms:
@@ -66,7 +70,7 @@ RayHitInfo ray(Vector3 source, Vector3 tip, int depth, RaytracedParametricObject
 
         if(t < closest_t && t > 0){
             closest_t = t;
-            result.location = vec3_add(source, vec3_scale(tip, t));
+            result.location = vec3_add(ray.origin, vec3_scale(ray.direction, t));
             //TODO: make this use materials instead
             result.color = object.color;
             //TODO: compute normal here
