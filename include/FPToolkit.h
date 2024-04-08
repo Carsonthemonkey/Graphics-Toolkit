@@ -7,6 +7,8 @@ int G_init_graphics(double width, double height);
 
 int G_wait_key();
 
+int G_wait_click(double p[2]);
+
 int G_no_wait_key();
 
 extern int (*G_rgb)(double r, double g, double b);
