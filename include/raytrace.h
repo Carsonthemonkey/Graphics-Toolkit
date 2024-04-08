@@ -9,6 +9,11 @@ enum RaytracedObjectType {
 };
 
 typedef struct {
+    Vector3 origin;
+    Vector3 direction;
+} Ray;
+
+typedef struct {
     enum RaytracedObjectType object_type;
     Vector3 (*f)(double, double);
     double transform[4][4];
@@ -24,6 +29,6 @@ typedef struct {
 
 void raytrace_scene(int width, int height, Camera cam, RaytracedParametricObject3D* objs, int num_objs);
 
-RayHitInfo ray(Vector3 source, Vector3 direction, int depth, RaytracedParametricObject3D* objs, int num_objs);
+RayHitInfo raytrace(Ray ray, int depth, RaytracedParametricObject3D* objs, int num_objs);
 
 #endif
