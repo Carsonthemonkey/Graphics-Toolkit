@@ -40,13 +40,16 @@ RayHitInfo raytrace(Ray ray, int depth, RaytracedParametricObject3D* objs, int n
 
     for(int o = 0; o < num_objs; o++){
         RaytracedParametricObject3D object = objs[o];
-        Vector3 tsource = mat4_mult_point(ray.origin, object.inverse);
-        Vector3 ttip = mat4_mult_point(ray.direction, object.inverse);
+        // Vector3 tsource = mat4_mult_point(ray.origin, object.inverse);
+        // Vector3 tsource 
+        // Vector3 ttip = mat4_mult_point(ray.direction, object.inverse);
+
         // x^2 + y^2 + z^2 - 1 = 0
         // (tsrc.x + tdir.x * t)^2 + (tsrc.y + tdir.y * t)^2 + (tsrc.z + tdir.x * z)^2 - 1 = 0
         // Now we need to foil the terms:
         //(tsrc * tsrc)
-        Vector3 tip_dir = vec3_sub(ttip, tsource);
+        Vector3 tip_dir = ray.direction; //vec3_sub(ttip, tsource);
+        Vector3 tsource = ray.origin;
         Vector3 va = vec3_mult(tip_dir, tip_dir);
         // (tdir * tsrc) + (tsrc * tdir)
         Vector3 vb = vec3_scale(vec3_mult(tip_dir, tsource), 2);
