@@ -124,5 +124,12 @@ void rotate_camera_z_degrees(Camera* cam, double z_degrees,  enum TransformScope
 bool is_visible_to_camera(Camera cam, Vector3 point);
 
 
+/**
+ * Retrieves the film distance of the camera based on its field of view.
+ *
+ * @param cam The camera object.
+ * @return the distance from the camera eye to the film
+ */
+double get_film_distance(Camera cam);
 
 #endif

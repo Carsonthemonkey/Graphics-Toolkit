@@ -121,3 +121,8 @@ bool is_visible_to_camera(Camera cam, Vector3 point){
     if(fabs(point.y) > extent){return false;}
     return true;
 }
+
+//TODO: make this work for non square aspect ratios
+double get_film_distance(Camera cam){
+    return 1 / tan(to_radians(cam.half_fov_degrees));
+}
