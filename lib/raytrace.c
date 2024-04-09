@@ -4,24 +4,31 @@
 #include "matrix.h"
 #include "FPToolkit.h"
 #include "colors.h"
+#include "trig.h"
 
 int MAX_BOUNCES = 1;
 
 void raytrace_scene(int width, int height, Camera cam, RaytracedParametricObject3D* objs, int num_objs){
+    double dwidth = (double)width;
+    double dheight = (double)height;
+    double film_extent = tan(to_radians(cam.half_fov_degrees));
     for(int y = 0; y < height; y++){
         for(int x = 0; x < width; x++){
-            double film_distance = get_film_distance(cam);
-            Vector3 pixel_film_space = {
-                (x / (double)width) - 0.5,
-                (y / (double)height) - 0.5,
-                film_distance
+            //TODO: make this work for different aspect ratios
+            Vector3 pixel_camera_space = {
+                ((x - (dwidth / 2)) / dwidth) * (film_extent * 2),
+                ((y - (dheight / 2)) / dheight) * (film_extent * 2),
+                1
             };
-            Vector3 pixel_film_space_normalized = vec3_normalized(pixel_film_space);
-            Vector3 pixel_direction = vec3_sub(mat4_mult_point(pixel_film_space_normalized, cam.inverse_view_matrix), cam.eye);
-            G_rgb(SPREAD_COL3(pixel_direction));
+
+            Vector3 world_space_dir = vec3_sub(mat4_mult_point(pixel_camera_space, cam.inverse_view_matrix), cam.eye);
+            Ray ray = {
+                .origin=cam.eye,
+                .direction=world_space_dir
+            };
+            G_rgb(SPREAD_COL3(vec3_normalized(world_space_dir)));
             G_pixel(x, y);
-            Ray ray = {.origin=cam.eye, .direction=pixel_direction};
-            RayHitInfo hit = raytrace(ray, 1, objs, num_objs);
+            RayHitInfo hit = raytrace(ray, MAX_BOUNCES, objs, num_objs);
             if(!isnan(hit.location.x)){
                 G_rgb(SPREAD_COL3(hit.color));
                 G_pixel(x, y);
