@@ -22,7 +22,7 @@ void raytrace_scene(int width, int height, Camera cam, RaytracedParametricObject
             G_pixel(x, y);
             Ray ray = {.origin=cam.eye, .direction=pixel_direction};
             RayHitInfo hit = raytrace(ray, 1, objs, num_objs);
-            if(hit.location.x != NAN){
+            if(!isnan(hit.location.x)){
                 G_rgb(SPREAD_COL3(hit.color));
                 G_pixel(x, y);
             }
