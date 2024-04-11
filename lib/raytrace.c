@@ -1,6 +1,7 @@
 #include "raytrace.h"
 #include <stdio.h>
 #include <math.h>
+#include <stdbool.h>
 #include "matrix.h"
 #include "FPToolkit.h"
 #include "colors.h"
@@ -9,7 +10,7 @@
 
 int MAX_BOUNCES = 1;
 
-void raytrace_scene(int width, int height, Camera cam, RaytracedParametricObject3D* objs, int num_objs){
+void raytrace_scene(int width, int height, Camera cam, RaytracedParametricObject3D* objs, int num_objs, RaytracedLight* lights, int num_lights){
     //TODO: Make this work for non spheres
     double dwidth = (double)width;
     double dheight = (double)height;
@@ -30,8 +31,8 @@ void raytrace_scene(int width, int height, Camera cam, RaytracedParametricObject
             };
             G_rgb(SPREAD_COL3(vec3_normalized(world_space_dir)));
             G_pixel(x, y);
-            RayHitInfo hit = raytrace(ray, MAX_BOUNCES, objs, num_objs);
-            if(!isnan(hit.location.x)){
+            RayHitInfo hit;
+            if(raytrace(&hit, ray, MAX_BOUNCES, objs, num_objs, lights, num_lights)){
                 G_rgb(SPREAD_COL3(hit.color));
                 G_pixel(x, y);
             }
@@ -39,13 +40,14 @@ void raytrace_scene(int width, int height, Camera cam, RaytracedParametricObject
     }
 }
 
-RayHitInfo raytrace(Ray ray, int depth, RaytracedParametricObject3D* objs, int num_objs){
+bool raytrace(RayHitInfo* out, Ray ray, int depth, RaytracedParametricObject3D* objs, int num_objs, RaytracedLight* lights, int num_lights){
     double closest_t = INFINITY;
-    RayHitInfo result = {
-        .location={NAN, NAN, NAN},
-        .normal={NAN, NAN, NAN},
-        .color={BLACK}
-    };
+    bool did_hit = false;
+    // RayHitInfo result = {
+    //     .location={NAN, NAN, NAN},
+    //     .normal={NAN, NAN, NAN},
+    //     .color={BLACK}
+    // };
     Vector3 tip = vec3_add(ray.origin, ray.direction);
     for(int o = 0; o < num_objs; o++){
         RaytracedParametricObject3D object = objs[o];
@@ -80,22 +82,38 @@ RayHitInfo raytrace(Ray ray, int depth, RaytracedParametricObject3D* objs, int n
 
         if(t < closest_t && t > 0){
             closest_t = t;
+            if(out == NULL) return true;
+            did_hit = true;
+
             Vector3 obj_space_location = vec3_add(tsource, vec3_scale(tdir, t));
-            result.location = vec3_add(ray.origin, vec3_scale(ray.direction, t));
-
-
+            out->location = vec3_add(ray.origin, vec3_scale(ray.direction, t));
             Vector3 obj_normal = vec3_scale(obj_space_location, 2);
-            result.normal.x = obj_normal.x * object.inverse[0][0] + obj_normal.y * object.inverse[1][0] + obj_normal.z * object.inverse[2][0];
-            result.normal.y = obj_normal.x * object.inverse[0][1] + obj_normal.y * object.inverse[1][1] + obj_normal.z * object.inverse[2][1];
-            result.normal.z = obj_normal.x * object.inverse[0][2] + obj_normal.y * object.inverse[1][2] + obj_normal.z * object.inverse[2][2];
+            out->normal.x = obj_normal.x * object.inverse[0][0] + obj_normal.y * object.inverse[1][0] + obj_normal.z * object.inverse[2][0];
+            out->normal.y = obj_normal.x * object.inverse[0][1] + obj_normal.y * object.inverse[1][1] + obj_normal.z * object.inverse[2][1];
+            out->normal.z = obj_normal.x * object.inverse[0][2] + obj_normal.y * object.inverse[1][2] + obj_normal.z * object.inverse[2][2];
 
-
+            //Check if object is lit
+            out->color = object.material.base_color;
+            for(int l = 0; l < num_lights; l++){
+                RaytracedLight light = lights[l];
+                Vector3 light_dir = vec3_normalized(vec3_sub(light.position, out->location));
+                Ray shadow_ray = {
+                    .origin=vec3_add(out->location, vec3_scale(out->normal, 0.01)),
+                    .direction=light_dir
+                };
+                //TODO: make this more generalized of a function
+                if(raytrace(NULL, shadow_ray, 1, objs, num_objs, lights, num_lights)){
+                    out->color = vec3_scale(out->color, 0.2);
+                    break;
+                }
+            }
             
             //TODO: make this use materials instead
-            // result.color = object.color;
-            result.color = result.normal;
+            
+            // result.color = phong_lighting(result.location, result.normal)
+            // result.color = result.normal;
             //TODO: compute normal here
         }
     }
-    return result;
+    return did_hit;
 }
