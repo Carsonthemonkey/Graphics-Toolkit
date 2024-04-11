@@ -102,6 +102,8 @@ bool raytrace(RayHitInfo* out, Ray ray, int depth, RaytracedParametricObject3D* 
                     .direction=light_dir
                 };
                 //TODO: make this more generalized of a function
+                //TODO: this will shadow the object if the ray hits something even after it has gone past the light. This doesn't matter for sun lights, but will for all other types. To fix, compare the hit distance to the distance to the light
+                
                 if(raytrace(NULL, shadow_ray, 1, objs, num_objs, lights, num_lights)){
                     out->color = vec3_scale(out->color, 0.2);
                     break;
