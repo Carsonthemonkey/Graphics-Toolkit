@@ -5,10 +5,12 @@
 #include "FPToolkit.h"
 #include "colors.h"
 #include "trig.h"
+#include "lightmodel.h"
 
 int MAX_BOUNCES = 1;
 
 void raytrace_scene(int width, int height, Camera cam, RaytracedParametricObject3D* objs, int num_objs){
+    //TODO: Make this work for non spheres
     double dwidth = (double)width;
     double dheight = (double)height;
     double film_extent = tan(to_radians(cam.half_fov_degrees));
@@ -78,9 +80,20 @@ RayHitInfo raytrace(Ray ray, int depth, RaytracedParametricObject3D* objs, int n
 
         if(t < closest_t && t > 0){
             closest_t = t;
+            Vector3 obj_space_location = vec3_add(tsource, vec3_scale(tdir, t));
             result.location = vec3_add(ray.origin, vec3_scale(ray.direction, t));
+
+
+            Vector3 obj_normal = vec3_scale(obj_space_location, 2);
+            result.normal.x = obj_normal.x * object.inverse[0][0] + obj_normal.y * object.inverse[1][0] + obj_normal.z * object.inverse[2][0];
+            result.normal.y = obj_normal.x * object.inverse[0][1] + obj_normal.y * object.inverse[1][1] + obj_normal.z * object.inverse[2][1];
+            result.normal.z = obj_normal.x * object.inverse[0][2] + obj_normal.y * object.inverse[1][2] + obj_normal.z * object.inverse[2][2];
+
+
+            
             //TODO: make this use materials instead
-            result.color = object.color;
+            // result.color = object.color;
+            result.color = result.normal;
             //TODO: compute normal here
         }
     }

@@ -3,6 +3,7 @@
 #include "vector.h"
 #include "camera.h"
 #include "colors.h"
+#include "lightmodel.h"
 
 enum RaytracedObjectType {
     SPHERE
@@ -19,6 +20,7 @@ typedef struct {
     double transform[4][4];
     double inverse[4][4];
     Color3 color; //TODO: Make this a material instead
+    PhongMaterial material;
 } RaytracedParametricObject3D;
 
 typedef struct {
@@ -26,6 +28,7 @@ typedef struct {
     Vector3 normal;
     Color3 color;
 } RayHitInfo;
+
 
 void raytrace_scene(int width, int height, Camera cam, RaytracedParametricObject3D* objs, int num_objs);
 
