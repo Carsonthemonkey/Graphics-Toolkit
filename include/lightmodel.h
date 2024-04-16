@@ -39,9 +39,11 @@ typedef struct PhongMaterial {
  * @param camera The camera to calculate the lightmodel from
  * @param lights An array of PhongLights in world space to use for lighting calculations
  * @param num_lights The number of PhongLights in the array
- * @return Vector3 The color of the point based on the phonglighting
+ * @return Color3 The color of the point based on the phonglighting
  */
-Vector3 phong_lighting(Vector3 position, Vector3 normal, Camera cam, PhongMaterial material, PhongLight* lights, int num_lights);
+Color3 phong_lighting(Vector3 position, Vector3 normal, Camera cam, PhongMaterial material, PhongLight* lights, int num_lights);
+
+Color3 phong_lighting_eye(Vector3 position, Vector3 normal, Vector3 eye, PhongMaterial material, PhongLight* lights, int num_lights);
 
 /**
  * @brief Draws a gizmo to display point lights in the scene

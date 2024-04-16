@@ -104,6 +104,14 @@ Vector3 vec3_cross_prod(Vector3 a, Vector3 b){
     return result;
 }
 
+Vector3 vec3_reflection(Vector3 incoming, Vector3 normal){
+    Vector3 result;
+    double dot_prod = vec3_dot_prod(incoming, normal);
+    Vector3 scaled_normal = vec3_scale(normal, 2 * dot_prod);
+    result = vec3_sub(incoming, scaled_normal);
+    return result;
+}
+
 double* vec3_to_array(Vector3* vec){
     //exists so that it's behaviour can be updated later
     return (double*)vec;

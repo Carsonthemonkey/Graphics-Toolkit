@@ -147,6 +147,15 @@ double vec3_dot_prod(Vector3 a, Vector3 b);
  */
 Vector3 vec3_cross_prod(Vector3 a, Vector3 b);
 
+/**
+ * @brief Computes the reflection vector given the incoming and normal vector
+ * 
+ * @param incoming The incoming vector
+ * @param normal The normal vector of the reflection plane
+ * @return Vector3 The reflection vector
+ */
+Vector3 vec3_reflection(Vector3 incoming, Vector3 normal);
+
 double* vec3_to_array(Vector3* vec);
 
 /**

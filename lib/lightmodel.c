@@ -10,7 +10,7 @@ static const int LIGHT_GIZMO_RADIUS = 7;
 
 const double AMBIENT = 0.2;
 
-Vector3 phong_lighting(Vector3 position, Vector3 normal, Camera cam, PhongMaterial material, PhongLight* lights, int num_lights){
+Color3 phong_lighting(Vector3 position, Vector3 normal, Camera cam, PhongMaterial material, PhongLight* lights, int num_lights){
     Color3 result = vec3_scale(material.base_color, AMBIENT);
     for(int l = 0; l < num_lights; l++){
         PhongLight light = lights[l];
@@ -30,6 +30,34 @@ Vector3 phong_lighting(Vector3 position, Vector3 normal, Camera cam, PhongMateri
         Color3 specular = vec3_mult(vec3_scale(light.specular, spec), material.specular);
         result = vec3_add(result, specular);
     }
+    return result;
+}
+
+Color3 phong_lighting_eye(Vector3 position, Vector3 normal, Vector3 eye, PhongMaterial material, PhongLight* lights, int num_lights){
+    Color3 result = vec3_scale(material.base_color, AMBIENT);
+    for(int l = 0; l < num_lights; l++){
+        PhongLight light = lights[l];
+
+        /* Diffuse */
+        Vector3 light_dir = vec3_normalized(vec3_sub(light.position, position));
+        double dot_prod = vec3_dot_prod(light_dir, normal);
+        if(dot_prod < 0) continue;
+        Color3 diffuse = vec3_mult(vec3_scale(light.diffuse, dot_prod), material.diffuse);
+        result = vec3_add(result, diffuse);
+
+        /* Specular */
+        Vector3 reflection = vec3_normalized(vec3_sub(vec3_scale(normal, 2 * dot_prod), light_dir));
+        Vector3 view_vec = vec3_normalized(vec3_sub(eye, position));
+        double dp = fabs(vec3_dot_prod(reflection, view_vec));
+        double spec = pow(dp, material.shininess);
+        if(spec < 0) continue;
+        Color3 specular = vec3_mult(vec3_scale(light.specular, spec), material.specular);
+        result = vec3_add(result, specular);
+
+        // if (isnan(result.x)) /*vec3_print(vec3_dot_prod(reflection, view_vec)); */ printf("%lf\n",vec3_dot_prod(reflection, view_vec)); 
+        
+    }
+    // if(vec3_magnitude(result) > sqrt(3)) vec3_print(result);
     return result;
 }
 

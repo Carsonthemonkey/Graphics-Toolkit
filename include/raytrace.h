@@ -15,19 +15,12 @@ typedef struct {
 } Ray;
 
 typedef struct {
-    Color3 base_color;
-} RaytracedMaterial;
-
-typedef struct {
-    Vector3 position;
-} RaytracedLight;
-
-typedef struct {
     enum RaytracedObjectType object_type;
     Vector3 (*f)(double, double);
     double transform[4][4];
     double inverse[4][4];
-    RaytracedMaterial material;
+    PhongMaterial material;
+    double roughness;
 } RaytracedParametricObject3D;
 
 typedef struct {
@@ -38,8 +31,8 @@ typedef struct {
 
 
 
-void raytrace_scene(int width, int height, Camera cam, RaytracedParametricObject3D* objs, int num_objs, RaytracedLight* lights, int num_lights);
+void raytrace_scene(int width, int height, Camera cam, RaytracedParametricObject3D* objs, int num_objs, PhongLight* lights, int num_lights);
 
-bool raytrace(RayHitInfo* out, Ray ray, int depth, RaytracedParametricObject3D* objs, int num_objs, RaytracedLight* lights, int num_lights);
+bool raytrace(RayHitInfo* out, Ray ray, int depth, RaytracedParametricObject3D* objs, int num_objs, PhongLight* lights, int num_lights);
 
 #endif
