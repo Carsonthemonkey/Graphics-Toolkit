@@ -92,6 +92,7 @@ Vector3 param_plane(double u, double v);
 Vector3 param_cylinder(double u, double v);
 
 extern double TORUS_MINOR_RADIUS;
+extern double TORUS_MAJOR_RADIUS;
 /**
  * @brief Parametric function for a torus
  * 
