@@ -12,6 +12,7 @@
 #include "random.h"
 
 const double EPSILON = 0.000001;
+const int NUM_SHADOW_RAYS = 1;
 
 bool intersect_triangle(double* t_out, double closest_t, Ray ray, Triangle triangle){
     //TODO: precompute triangle normal
@@ -94,16 +95,24 @@ Color3 path_trace(PathTracedScene scene, Ray ray){
     // vec3_print(scene.lights[0].position);
     /* Shadow Rays */
     Ray shadow_ray = {.origin=vec3_add(hit_location, vec3_scale(intersected_triangle.normal, EPSILON))};
+    Color3 intensity = {0, 0, 0};
+    double shadow_ray_contribution = 1.0 / NUM_SHADOW_RAYS;
     for(int l = 0; l < scene.num_lights; l++){
-        double light_distance = vec3_distance(shadow_ray.origin, scene.lights[l].position) - EPSILON;
-        shadow_ray.direction = vec3_normalized(vec3_sub(scene.lights[l].position, shadow_ray.origin));
+        PointLight light = scene.lights[l];
 
         //TODO: put this into it's own function
-        for(int m = 0; m < scene.num_meshes; m++){
-            for(int tr = 0; tr < scene.meshes[m].num_tris; tr++){
-                if(!intersects_bounding_box(scene.meshes[m], shadow_ray)) continue;
-                //TODO: make this work with multiple lights
-                if(intersect_triangle(NULL, light_distance, shadow_ray, scene.meshes[m].tris[tr])) return black;
+        for(int r = 0; r < NUM_SHADOW_RAYS; r++){
+            
+            Vector3 dest = vec3_add(random_point_in_sphere(light.radius), light.position);
+            double light_distance = vec3_distance(shadow_ray.origin, light.position) - EPSILON;
+            shadow_ray.direction = vec3_normalized(vec3_sub(dest, shadow_ray.origin));
+
+            for(int m = 0; m < scene.num_meshes; m++){
+                for(int tr = 0; tr < scene.meshes[m].num_tris; tr++){
+                    if(!intersects_bounding_box(scene.meshes[m], shadow_ray)) continue;
+                    //TODO: make this work with multiple lights
+                    if(intersect_triangle(NULL, light_distance, shadow_ray, scene.meshes[m].tris[tr])) return black;
+                }
             }
         }
     }
