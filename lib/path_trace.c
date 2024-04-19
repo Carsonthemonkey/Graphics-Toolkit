@@ -43,6 +43,34 @@ bool intersect_triangle(Vector3* location_out, Ray ray, Triangle triangle){
     return false;
 }
 
+bool intersects_bounding_box(Mesh mesh, Ray ray){
+    Vector3 box_min = mesh.bounding_box_min;
+    Vector3 box_max = mesh.bounding_box_max;
+
+    Vector3 direction_inv = {1.0 / ray.direction.x, 1.0 / ray.direction.y, 1.0 / ray.direction.z};
+    Vector3 tmin = {(box_min.x - ray.origin.x) * direction_inv.x, (box_min.y - ray.origin.y) * direction_inv.y, (box_min.z - ray.origin.z) * direction_inv.z};
+    Vector3 tmax = {(box_max.x - ray.origin.x) * direction_inv.x, (box_max.y - ray.origin.y) * direction_inv.y, (box_max.z - ray.origin.z) * direction_inv.z};
+
+    if (ray.direction.x == 0) {
+        tmin.x = ray.origin.x < box_min.x || ray.origin.x > box_max.x ? -INFINITY : INFINITY;
+        tmax.x = ray.origin.x < box_min.x || ray.origin.x > box_max.x ? INFINITY : -INFINITY;
+    }
+    if (ray.direction.y == 0) {
+        tmin.y = ray.origin.y < box_min.y || ray.origin.y > box_max.y ? -INFINITY : INFINITY;
+        tmax.y = ray.origin.y < box_min.y || ray.origin.y > box_max.y ? INFINITY : -INFINITY;
+    }
+    if (ray.direction.z == 0) {
+        tmin.z = ray.origin.z < box_min.z || ray.origin.z > box_max.z ? -INFINITY : INFINITY;
+        tmax.z = ray.origin.z < box_min.z || ray.origin.z > box_max.z ? INFINITY : -INFINITY;
+    }
+
+    double t_enter = fmax(fmin(tmin.x, tmax.x), fmax(fmin(tmin.y, tmax.y), fmin(tmin.z, tmax.z)));
+    double t_exit = fmin(fmax(tmin.x, tmax.x), fmin(fmax(tmin.y, tmax.y), fmax(tmin.z, tmax.z)));
+
+    return t_enter <= t_exit && t_exit >= 0;
+}
+
+
 void path_trace_scene(PathTracedScene scene){
     double dwidth = (double)scene.width;
     double dheight = (double)scene.height;
@@ -66,6 +94,10 @@ void path_trace_scene(PathTracedScene scene){
             // loop over all meshes
             G_rgb(SPREAD_COL3(ray.direction));
             for(int m = 0; m < scene.num_meshes; m++){
+                // check against bounding box
+                if(!intersects_bounding_box(scene.meshes[m], ray))continue;
+                else G_rgb(RED);
+
                 // loop over mesh tris
                 for(int t = 0; t < scene.meshes[m].num_tris; t++){
                     //TODO: check which is closer
