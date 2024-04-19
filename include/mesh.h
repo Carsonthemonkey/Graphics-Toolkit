@@ -10,7 +10,9 @@ typedef struct {
 
 typedef struct {
     // a, b, and c are indices of vertices in the mesh
-    int a, b, c;
+    Vertex* a;
+    Vertex* b;
+    Vertex* c;
 } Triangle;
 
 

@@ -108,14 +108,18 @@ void load_mesh_from_ply(Mesh* mesh, char* filename){
     i = 0;
     while(fgets(line, BUFFER_SIZE, f) && i < mesh->num_tris){
 
-        token = strtok(line, "\n ");
+        token = strtok(line, "\n\r\t ");
         if(!strcmp(token, "comment")) continue;
-
-        mesh->tris[i].a = atoi(token);
-        token = strtok(NULL, "\n ");
-        mesh->tris[i].b = atoi(token);
-        token = strtok(NULL, "\n ");
-        mesh->tris[i].c = atoi(token);
+        if(atoi(token) != 3){
+            fprintf(stderr, "faces must be triangles\n");
+            exit(1);
+        }
+        token = strtok(NULL, "\n\r\t ");
+        mesh->tris[i].a = mesh->vertices + atoi(token);
+        token = strtok(NULL, "\n\r\t ");
+        mesh->tris[i].b = mesh->vertices + atoi(token);
+        token = strtok(NULL, "\n\r\t ");
+        mesh->tris[i].c = mesh->vertices + atoi(token);
         i++;
     }
 
