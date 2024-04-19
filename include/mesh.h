@@ -2,6 +2,12 @@
 #define MESH_H
 #include "vector.h"
 #include "camera.h"
+#include "colors.h"
+
+//TODO: put this in path_trace.h but its causing include errors right now
+typedef struct {
+    Color3 base_color;
+} PathTracedMaterial;
 
 typedef struct {
     Vector3 position;
@@ -28,6 +34,7 @@ typedef struct {
 
     double transform[4][4];
     double inverse_transform[4][4];
+    PathTracedMaterial material;
 } Mesh;
 
 /**
@@ -108,5 +115,5 @@ void compute_face_normals(Mesh* mesh);
  * @param width The width of the screen
  * @param height the height of the screen
  */
-void debug_draw_mesh(Mesh mesh, Camera cam, int width, int heigh);
+void debug_draw_mesh(Mesh mesh, Camera cam, int width, int height);
 #endif

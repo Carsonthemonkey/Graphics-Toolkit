@@ -8,6 +8,7 @@
 #include "FPToolkit.h"
 #include "colors.h"
 #include "vector.h"
+#include "mesh.h"
 
 const double EPSILON = 0.000001;
 
@@ -105,7 +106,8 @@ void path_trace_scene(PathTracedScene scene){
                     //TODO: check which is closer
                     if(intersect_triangle(&t_val, closest_t, ray, scene.meshes[m].tris[t])){
                         closest_t = t_val;
-                        G_rgb(SPREAD_VEC3(scene.meshes[m].tris[t].normal)); 
+                        // G_rgb(SPREAD_VEC3(scene.meshes[m].tris[t].normal));
+                        G_rgb(SPREAD_VEC3(scene.meshes[m].material.base_color));
                     }
                 }
             }

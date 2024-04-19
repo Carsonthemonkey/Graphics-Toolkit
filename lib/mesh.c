@@ -243,7 +243,7 @@ void debug_draw_mesh(Mesh mesh, Camera cam, int width, int height){
         point_to_window(&b, tri.b->position, cam, width, height);
         point_to_window(&c, tri.c->position, cam, width, height);
         
-        G_rgb(MAGENTA);
+        G_rgb(SPREAD_COL3(mesh.material.base_color));
         G_triangle(SPREAD_VEC2(a), SPREAD_VEC2(b), SPREAD_VEC2(c));
     }
 }

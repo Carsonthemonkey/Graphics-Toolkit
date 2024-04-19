@@ -7,9 +7,6 @@
 #include "colors.h"
 #include "mesh.h"
 
-typedef struct {
-    Color3 base_color;
-} PathTracedMaterial;
 
 typedef struct {
     int width, height;
