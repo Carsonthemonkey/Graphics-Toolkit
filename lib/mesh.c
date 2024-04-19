@@ -86,7 +86,7 @@ void load_mesh_from_ply(Mesh* mesh, char* filename){
     // printf("End header\n");
     // Now we read values
     int i = 0;
-    while(fgets(line, BUFFER_SIZE, f) && i < mesh->num_vertices){
+    while(i < mesh->num_vertices && fgets(line, BUFFER_SIZE, f)){
         // Read positions
         token = strtok(line, "\n\r\t ");
         if(!strcmp(token, "comment")) continue;
@@ -106,7 +106,7 @@ void load_mesh_from_ply(Mesh* mesh, char* filename){
         i++;
     }
     i = 0;
-    while(fgets(line, BUFFER_SIZE, f) && i < mesh->num_tris){
+    while(i < mesh->num_tris && fgets(line, BUFFER_SIZE, f)){
 
         token = strtok(line, "\n\r\t ");
         if(!strcmp(token, "comment")) continue;
