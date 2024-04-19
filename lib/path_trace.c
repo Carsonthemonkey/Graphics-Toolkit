@@ -17,14 +17,15 @@ bool intersect_triangle(Vector3* location_out, Ray ray, Triangle triangle){
     Vector3 edge_1 = vec3_sub(triangle.b->position, triangle.a->position);
     Vector3 edge_2 = vec3_sub(triangle.c->position, triangle.a->position);
 
-    Vector3 direction_normal_2 = vec3_cross_prod(edge_2, ray.direction); //This may need to be normalized
-    double determinant = vec3_dot_prod(edge_1, direction_normal_2);
-    if(determinant > -EPSILON && determinant < EPSILON) return false; //Ray is paralell to triangle
+    Vector3 normal = vec3_cross_prod(edge_1, edge_2); //This may need to be normalized
+    Vector3 pvec = vec3_cross_prod(ray.direction, edge_2);
+    double determinant = vec3_dot_prod(edge_1, pvec);
+    if(fabs(determinant) < EPSILON) return false; //Ray is paralell to triangle
     
     double inverse_determinant = 1.0 / determinant;
-    Vector3 vertex_to_origin = vec3_sub(triangle.a->position, ray.origin);
+    Vector3 vertex_to_origin = vec3_sub(ray.origin, triangle.a->position);
 
-    double u = vec3_dot_prod(vertex_to_origin, direction_normal_2) * inverse_determinant;
+    double u = vec3_dot_prod(vertex_to_origin, pvec) * inverse_determinant;
     if(u < 0 || u > 1) return false;
 
     Vector3 edge_1_cross_prod = vec3_cross_prod(vertex_to_origin, edge_1);
