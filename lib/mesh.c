@@ -221,6 +221,17 @@ void compute_mesh_bounds(Mesh* mesh){
     mesh->bounding_box_min = min;
 }
 
+
+void compute_face_normals(Mesh* mesh){
+    for(int i = 0; i < mesh->num_tris; i++){
+        Triangle tri = mesh->tris[i];
+        Vector3 edge_1 = vec3_sub(tri.b->position, tri.a->position);
+        Vector3 edge_2 = vec3_sub(tri.c->position, tri.a->position);
+
+        mesh->tris[i].normal = vec3_cross_prod(edge_1, edge_2);
+    }
+}
+
 //This doesn't account for clipping but It doesnt really matters
 void debug_draw_mesh(Mesh mesh, Camera cam, int width, int height){
     for(int i = 0; i < mesh.num_tris; i++){

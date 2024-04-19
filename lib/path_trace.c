@@ -17,7 +17,8 @@ bool intersect_triangle(Vector3* location_out, Ray ray, Triangle triangle){
     Vector3 edge_1 = vec3_sub(triangle.b->position, triangle.a->position);
     Vector3 edge_2 = vec3_sub(triangle.c->position, triangle.a->position);
 
-    Vector3 normal = vec3_cross_prod(edge_1, edge_2); //This may need to be normalized
+    // Vector3 normal = vec3_cross_prod(edge_1, edge_2); //This may need to be normalized
+    Vector3 normal = triangle.normal;
     Vector3 pvec = vec3_cross_prod(ray.direction, edge_2);
     double determinant = vec3_dot_prod(edge_1, pvec);
     if(fabs(determinant) < EPSILON) return false; //Ray is paralell to triangle
@@ -96,7 +97,7 @@ void path_trace_scene(PathTracedScene scene){
             for(int m = 0; m < scene.num_meshes; m++){
                 // check against bounding box
                 if(!intersects_bounding_box(scene.meshes[m], ray))continue;
-                else G_rgb(RED);
+                // else G_rgb(RED);
 
                 // loop over mesh tris
                 for(int t = 0; t < scene.meshes[m].num_tris; t++){

@@ -13,6 +13,7 @@ typedef struct {
     Vertex* a;
     Vertex* b;
     Vertex* c;
+    Vector3 normal;
 } Triangle;
 
 
@@ -92,6 +93,13 @@ void rotate_mesh_z_degrees(Mesh* mesh, double degrees);
  */
 void compute_mesh_bounds(Mesh* mesh);
  
+ /**
+  * @brief Computes and sets the normals for all faces in the mesh
+  * 
+  * @param mesh The mesh whose normals will be computed
+  */
+void compute_face_normals(Mesh* mesh);
+
 /**
  * @brief Draws a mesh wireframe to the screen
  * 
