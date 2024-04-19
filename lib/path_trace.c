@@ -71,6 +71,46 @@ bool intersects_bounding_box(Mesh mesh, Ray ray){
     return t_enter <= t_exit && t_exit >= 0;
 }
 
+Color3 path_trace(PathTracedScene scene, Ray ray){
+    Color3 result = {SPREAD_COL3(ray.direction)};
+    Color3 black = {BLACK};
+    Triangle intersected_triangle;
+    double closest_t = INFINITY;
+    double t;
+    for(int m = 0; m < scene.num_meshes; m++){
+        Mesh mesh = scene.meshes[m];
+        if(!intersects_bounding_box(mesh, ray)) continue;
+        for(int tr = 0; tr < mesh.num_tris; tr++){
+            if(intersect_triangle(&t, closest_t, ray, mesh.tris[tr])){
+                closest_t = t;
+                // result = mesh.tris[tr];
+                result = mesh.material.base_color;
+                intersected_triangle = mesh.tris[tr];
+            }
+        }
+    }
+
+    Vector3 hit_location = vec3_add(ray.origin, vec3_scale(ray.direction, closest_t));
+    // vec3_print(scene.lights[0].position);
+    /* Shadow Rays */
+    Ray shadow_ray = {.origin=hit_location};
+    for(int l = 0; l < scene.num_lights; l++){
+        shadow_ray.direction = vec3_sub(scene.lights[l].position, shadow_ray.origin); //This may need to be normalized
+
+
+        //TODO: put this into it's own function
+        bool did_intersect = false;
+        for(int m = 0; m < scene.num_meshes; m++){
+            for(int tr = 0; tr < scene.meshes[m].num_tris; tr++){
+                if(!intersects_bounding_box(scene.meshes[m], shadow_ray)) continue;
+                //TODO!!: This need to take into account the distance of the light or else this will not work
+                if(intersect_triangle(NULL, INFINITY, shadow_ray, scene.meshes[m].tris[tr])) return black;
+            }
+        }
+    }
+
+    return result;
+}
 
 void path_trace_scene(PathTracedScene scene){
     double dwidth = (double)scene.width;
@@ -90,28 +130,8 @@ void path_trace_scene(PathTracedScene scene){
                 .origin=scene.main_camera->eye,
                 .direction=world_space_dir
             };
-
-            double closest_t = INFINITY;
-            double t_val;
-            // Vector3 location;
-            // loop over all meshes
-            G_rgb(SPREAD_COL3(ray.direction));
-            for(int m = 0; m < scene.num_meshes; m++){
-                // check against bounding box
-                if(!intersects_bounding_box(scene.meshes[m], ray))continue;
-                // else G_rgb(RED);
-
-                // loop over mesh tris
-                for(int t = 0; t < scene.meshes[m].num_tris; t++){
-                    //TODO: check which is closer
-                    if(intersect_triangle(&t_val, closest_t, ray, scene.meshes[m].tris[t])){
-                        closest_t = t_val;
-                        // G_rgb(SPREAD_VEC3(scene.meshes[m].tris[t].normal));
-                        G_rgb(SPREAD_VEC3(scene.meshes[m].material.base_color));
-                    }
-                }
-            }
-
+            Color3 pixel_color = path_trace(scene, ray);
+            G_rgb(SPREAD_COL3(pixel_color));
             // Triangle test_triangle = scene.meshes[0].tris[0];
             G_pixel(x, y);
         }

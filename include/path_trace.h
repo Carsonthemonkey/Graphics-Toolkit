@@ -7,12 +7,19 @@
 #include "colors.h"
 #include "mesh.h"
 
+typedef struct {
+    Vector3 position;
+    double radius;
+    Color3 intensity;
+} PointLight;
 
 typedef struct {
     int width, height;
     Camera* main_camera;
     int num_meshes;
     Mesh* meshes;
+    int num_lights;
+    PointLight* lights; //TODO: make this work nice with different light types
 } PathTracedScene;
 
 typedef struct {
