@@ -4,7 +4,12 @@
 #include <stdbool.h>
 #include "vector.h"
 #include "camera.h"
+#include "colors.h"
 #include "mesh.h"
+
+typedef struct {
+    Color3 base_color;
+} PathTracedMaterial;
 
 typedef struct {
     int width, height;
@@ -27,7 +32,7 @@ typedef struct {
  * @return true The ray does intersect the triangle
  * @return false The ray does not intersect the triangle
  */
-bool intersect_triangle(Vector3* location_out, Ray ray, Triangle triangle);
+bool intersect_triangle(double* t_out, double closest_t, Ray ray, Triangle triangle);
 
 /**
  * @brief Draws an entire path traced scene

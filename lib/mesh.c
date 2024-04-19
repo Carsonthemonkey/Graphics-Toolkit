@@ -10,6 +10,7 @@
 #include "FPToolkit.h"
 #include "colors.h"
 #include "M3d_matrix_tools.h"
+#include "path_trace.h"
 #include "trig.h"
 
 const int BUFFER_SIZE = 256;
@@ -228,7 +229,7 @@ void compute_face_normals(Mesh* mesh){
         Vector3 edge_1 = vec3_sub(tri.b->position, tri.a->position);
         Vector3 edge_2 = vec3_sub(tri.c->position, tri.a->position);
 
-        mesh->tris[i].normal = vec3_cross_prod(edge_1, edge_2);
+        mesh->tris[i].normal = vec3_normalized(vec3_cross_prod(edge_1, edge_2));
     }
 }
 

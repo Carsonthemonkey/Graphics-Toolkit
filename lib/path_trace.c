@@ -11,7 +11,7 @@
 
 const double EPSILON = 0.000001;
 
-bool intersect_triangle(Vector3* location_out, Ray ray, Triangle triangle){
+bool intersect_triangle(double* t_out, double closest_t, Ray ray, Triangle triangle){
     //TODO: precompute triangle normal
     //I don't really understand this intuitively. It would be a good idea to go back to this to get a better grasp on it
     Vector3 edge_1 = vec3_sub(triangle.b->position, triangle.a->position);
@@ -36,9 +36,8 @@ bool intersect_triangle(Vector3* location_out, Ray ray, Triangle triangle){
 
     double t = vec3_dot_prod(edge_2, edge_1_cross_prod) * inverse_determinant;
 
-    if(t > EPSILON) {
-        Vector3 location = vec3_add(ray.origin, vec3_scale(ray.direction, t));
-        *location_out = location;
+    if(t < closest_t && t > EPSILON) {
+        if(t_out != NULL) *t_out = t;
         return true;
     }
     return false;
@@ -91,7 +90,9 @@ void path_trace_scene(PathTracedScene scene){
                 .direction=world_space_dir
             };
 
-            Vector3 dummy_location;
+            double closest_t = INFINITY;
+            double t_val;
+            // Vector3 location;
             // loop over all meshes
             G_rgb(SPREAD_COL3(ray.direction));
             for(int m = 0; m < scene.num_meshes; m++){
@@ -102,7 +103,10 @@ void path_trace_scene(PathTracedScene scene){
                 // loop over mesh tris
                 for(int t = 0; t < scene.meshes[m].num_tris; t++){
                     //TODO: check which is closer
-                    if(intersect_triangle(&dummy_location, ray, scene.meshes[m].tris[t])) G_rgb(GREEN); 
+                    if(intersect_triangle(&t_val, closest_t, ray, scene.meshes[m].tris[t])){
+                        closest_t = t_val;
+                        G_rgb(SPREAD_VEC3(scene.meshes[m].tris[t].normal)); 
+                    }
                 }
             }
 
