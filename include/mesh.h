@@ -25,13 +25,13 @@ typedef struct {
 } Mesh;
 
 /**
- * @brief Loads triangles from an ascii .ply file.
+ * @brief Loads triangles from an ascii .ply file into a given mesh struct.
  * Assumes that the mesh is triangulated and that it has precomputed vertex normals only.
  * 
+ * @param mesh A pointer to the mesh to load the data into
  * @param filename The name of the file to be loaded
- * @return Triangle* The triangles loaded from the stl file
  */
-Mesh load_mesh_from_ply(char* filename);
+void load_mesh_from_ply(Mesh* mesh, char* filename);
 
 /**
  * @brief Frees all mesh vertices and faces from memory
