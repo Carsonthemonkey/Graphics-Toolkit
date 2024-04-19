@@ -9,6 +9,7 @@
 #include "colors.h"
 #include "vector.h"
 #include "mesh.h"
+#include "random.h"
 
 const double EPSILON = 0.000001;
 
@@ -101,8 +102,7 @@ Color3 path_trace(PathTracedScene scene, Ray ray){
         for(int m = 0; m < scene.num_meshes; m++){
             for(int tr = 0; tr < scene.meshes[m].num_tris; tr++){
                 if(!intersects_bounding_box(scene.meshes[m], shadow_ray)) continue;
-
-                //TODO!!: This need to take into account the distance of the light or else this will not work
+                //TODO: make this work with multiple lights
                 if(intersect_triangle(NULL, light_distance, shadow_ray, scene.meshes[m].tris[tr])) return black;
             }
         }
@@ -131,7 +131,6 @@ void path_trace_scene(PathTracedScene scene){
             };
             Color3 pixel_color = path_trace(scene, ray);
             G_rgb(SPREAD_COL3(pixel_color));
-            // Triangle test_triangle = scene.meshes[0].tris[0];
             G_pixel(x, y);
         }
     }
