@@ -62,11 +62,18 @@ void path_trace_scene(PathTracedScene scene){
                 .direction=world_space_dir
             };
 
-            Triangle test_triangle = scene.meshes[0].tris[0];
             Vector3 dummy_location;
-            if(intersect_triangle(&dummy_location, ray, test_triangle)) G_rgb(RED);
-            else G_rgb(SPREAD_COL3(ray.direction));
+            // loop over all meshes
+            G_rgb(SPREAD_COL3(ray.direction));
+            for(int m = 0; m < scene.num_meshes; m++){
+                // loop over mesh tris
+                for(int t = 0; t < scene.meshes[m].num_tris; t++){
+                    //TODO: check which is closer
+                    if(intersect_triangle(&dummy_location, ray, scene.meshes[m].tris[t])) G_rgb(GREEN); 
+                }
+            }
 
+            // Triangle test_triangle = scene.meshes[0].tris[0];
             G_pixel(x, y);
         }
     }
