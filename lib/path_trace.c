@@ -36,7 +36,6 @@ bool intersect_triangle(double* t_out, double closest_t, Ray ray, Triangle trian
     if(v < 0 || u + v > 1) return false;
 
     double t = vec3_dot_prod(edge_2, edge_1_cross_prod) * inverse_determinant;
-
     if(t < closest_t && t > EPSILON) {
         if(t_out != NULL) *t_out = t;
         return true;
@@ -93,18 +92,18 @@ Color3 path_trace(PathTracedScene scene, Ray ray){
     Vector3 hit_location = vec3_add(ray.origin, vec3_scale(ray.direction, closest_t));
     // vec3_print(scene.lights[0].position);
     /* Shadow Rays */
-    Ray shadow_ray = {.origin=hit_location};
+    Ray shadow_ray = {.origin=vec3_add(hit_location, vec3_scale(intersected_triangle.normal, EPSILON))};
     for(int l = 0; l < scene.num_lights; l++){
-        shadow_ray.direction = vec3_sub(scene.lights[l].position, shadow_ray.origin); //This may need to be normalized
-
+        double light_distance = vec3_distance(shadow_ray.origin, scene.lights[l].position) - EPSILON;
+        shadow_ray.direction = vec3_normalized(vec3_sub(scene.lights[l].position, shadow_ray.origin));
 
         //TODO: put this into it's own function
-        bool did_intersect = false;
         for(int m = 0; m < scene.num_meshes; m++){
             for(int tr = 0; tr < scene.meshes[m].num_tris; tr++){
                 if(!intersects_bounding_box(scene.meshes[m], shadow_ray)) continue;
+
                 //TODO!!: This need to take into account the distance of the light or else this will not work
-                if(intersect_triangle(NULL, INFINITY, shadow_ray, scene.meshes[m].tris[tr])) return black;
+                if(intersect_triangle(NULL, light_distance, shadow_ray, scene.meshes[m].tris[tr])) return black;
             }
         }
     }
@@ -136,4 +135,12 @@ void path_trace_scene(PathTracedScene scene){
             G_pixel(x, y);
         }
     }
+}
+
+void debug_draw_light(PointLight light, Camera cam, double width, double height){
+    Vector2 light_center;
+    if(!point_to_window(&light_center, light.position, cam, width, height)) return;
+    G_rgb(SPREAD_VEC3(light.intensity));
+    G_fill_circle(SPREAD_VEC2(light_center), 5);
+    //TODO: visualize the radius here
 }

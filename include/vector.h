@@ -147,6 +147,15 @@ double vec3_dot_prod(Vector3 a, Vector3 b);
  */
 Vector3 vec3_cross_prod(Vector3 a, Vector3 b);
 
+/**
+ * @brief Calculates the distance between two 3D vectors
+ * 
+ * @param a The first vector to calculat the distance
+ * @param b The second vector to calculate the distance
+ * @return double the distance between the vectors
+ */
+double vec3_distance(Vector3 a, Vector3 b);
+
 double* vec3_to_array(Vector3* vec);
 
 /**

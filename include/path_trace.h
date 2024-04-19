@@ -45,4 +45,15 @@ bool intersect_triangle(double* t_out, double closest_t, Ray ray, Triangle trian
  */
 void path_trace_scene(PathTracedScene scene);
 
+/**
+ * @brief Draws a point light gizmo in the scene
+ * 
+ * @param light The light to be drawn
+ * @param cam The camera to draw the light from
+ * @param width the 
+ */
+void debug_draw_light(PointLight light, Camera cam, double width, double height);
+
+
+
 #endif

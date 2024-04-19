@@ -104,6 +104,10 @@ Vector3 vec3_cross_prod(Vector3 a, Vector3 b){
     return result;
 }
 
+double vec3_distance(Vector3 a, Vector3 b){
+    return vec3_magnitude(vec3_sub(b, a));
+}
+
 double* vec3_to_array(Vector3* vec){
     //exists so that it's behaviour can be updated later
     return (double*)vec;
