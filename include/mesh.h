@@ -40,4 +40,43 @@ void load_mesh_from_ply(Mesh* mesh, char* filename);
  */
 void delete_mesh(Mesh mesh);
 
+/**
+ * @brief Translates a mesh's transform by the given translation.
+ * 
+ * @param mesh The mesh to be translated
+ * @param translation The translation vector to use
+ */
+void translate_mesh(Mesh* mesh, Vector3 translation);
+
+/**
+ * @brief Scales a mesh's transform by the given scaling factors.
+ * 
+ * @param mesh The mesh to be scaled
+ * @param scale The scale vector to use 
+ */
+void scale_mesh(Mesh* mesh, Vector3 scale);
+
+/**
+ * @brief Rotates a Mesh on the x axis
+ * 
+ * @param mesh the mesh to be rotated
+ * @param degrees the degrees on the x axis to rotate the mesh by
+ */
+
+void rotate_mesh_x_degrees(Mesh* mesh, double degrees);
+/**
+ * @brief Rotates a Mesh on the y axis
+ * 
+ * @param mesh the mesh to be rotated
+ * @param degrees the degrees on the y axis to rotate the mesh by
+ */
+void rotate_mesh_y_degrees(Mesh* mesh, double degrees);
+
+/**
+ * @brief Rotates a Mesh on the z axis
+ * 
+ * @param mesh the mesh to be rotated
+ * @param degrees the degrees on the z axis to rotate the mesh by
+ */
+void rotate_mesh_z_degrees(Mesh* mesh, double degrees);
 #endif

@@ -1,3 +1,4 @@
+#include <math.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,6 +7,8 @@
 #include <stdbool.h>
 #include <math.h>
 #include "mesh.h"
+#include "M3d_matrix_tools.h"
+#include "trig.h"
 
 const int BUFFER_SIZE = 256;
 
@@ -129,4 +132,60 @@ void delete_mesh(Mesh mesh){
     mesh.vertices = NULL;
     free(mesh.tris);
     mesh.tris = NULL;
+}
+
+void translate_mesh(Mesh* mesh, Vector3 translation){
+    double transform[4][4];
+    double inverse[4][4];
+    M3d_make_translation(transform, SPREAD_VEC3(translation));
+    M3d_make_translation(inverse, SPREAD_VEC3(vec3_scale(translation, -1)));
+
+    M3d_mat_mult(mesh->transform, transform, mesh->transform);
+    M3d_mat_mult(mesh->inverse_transform, inverse, mesh->inverse_transform);
+}
+
+void scale_mesh(Mesh* mesh, Vector3 scale){
+    double transform[4][4];
+    double inverse[4][4];
+    M3d_make_scaling(transform, SPREAD_VEC3(scale));
+    M3d_make_scaling(transform, SPREAD_VEC3(vec3_scale(scale, -1)));
+
+    M3d_mat_mult(mesh->transform, transform, mesh->transform);
+    M3d_mat_mult(mesh->transform, transform, mesh->transform);
+}
+
+void rotate_mesh_x_degrees(Mesh* mesh, double degrees){
+    double transform[4][4];
+    double inverse[4][4];
+    double rads = to_radians(degrees);
+
+    M3d_make_x_rotation_cs(transform, cos(degrees), sin(degrees));
+    M3d_make_x_rotation_cs(transform, cos(degrees), -sin(degrees));
+
+    M3d_mat_mult(mesh->transform, transform, mesh->transform);
+    M3d_mat_mult(mesh->inverse_transform, inverse, mesh->inverse_transform);
+}
+
+void rotate_mesh_y_degrees(Mesh* mesh, double degrees){
+    double transform[4][4];
+    double inverse[4][4];
+    double rads = to_radians(degrees);
+
+    M3d_make_y_rotation_cs(transform, cos(degrees), sin(degrees));
+    M3d_make_y_rotation_cs(transform, cos(degrees), -sin(degrees));
+
+    M3d_mat_mult(mesh->transform, transform, mesh->transform);
+    M3d_mat_mult(mesh->inverse_transform, inverse, mesh->inverse_transform);
+}
+
+void rotate_mesh_z_degrees(Mesh* mesh, double degrees){
+    double transform[4][4];
+    double inverse[4][4];
+    double rads = to_radians(degrees);
+
+    M3d_make_z_rotation_cs(transform, cos(degrees), sin(degrees));
+    M3d_make_z_rotation_cs(transform, cos(degrees), -sin(degrees));
+
+    M3d_mat_mult(mesh->transform, transform, mesh->transform);
+    M3d_mat_mult(mesh->inverse_transform, inverse, mesh->inverse_transform);
 }
