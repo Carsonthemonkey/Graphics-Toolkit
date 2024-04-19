@@ -1,7 +1,7 @@
 #ifndef MESH_H
 #define MESH_H
 #include "vector.h"
-
+#include "camera.h"
 
 typedef struct {
     Vector3 position;
@@ -91,4 +91,14 @@ void rotate_mesh_z_degrees(Mesh* mesh, double degrees);
  * @param mesh 
  */
 void compute_mesh_bounds(Mesh* mesh);
+ 
+/**
+ * @brief Draws a mesh wireframe to the screen
+ * 
+ * @param mesh The mesh to draw
+ * @param cam The camera from which to draw the mesh
+ * @param width The width of the screen
+ * @param height the height of the screen
+ */
+void debug_draw_mesh(Mesh mesh, Camera cam, int width, int heigh);
 #endif

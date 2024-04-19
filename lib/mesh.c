@@ -7,6 +7,8 @@
 #include <stdbool.h>
 #include <math.h>
 #include "mesh.h"
+#include "FPToolkit.h"
+#include "colors.h"
 #include "M3d_matrix_tools.h"
 #include "trig.h"
 
@@ -217,4 +219,19 @@ void compute_mesh_bounds(Mesh* mesh){
 
     mesh->bounding_box_max = max;
     mesh->bounding_box_min = min;
+}
+
+//This doesn't account for clipping but It doesnt really matters
+void debug_draw_mesh(Mesh mesh, Camera cam, int width, int height){
+    for(int i = 0; i < mesh.num_tris; i++){
+        Triangle tri = mesh.tris[i];
+        Vector2 a, b, c;
+
+        point_to_window(&a, tri.a->position, cam, width, height);
+        point_to_window(&b, tri.b->position, cam, width, height);
+        point_to_window(&c, tri.c->position, cam, width, height);
+        
+        G_rgb(MAGENTA);
+        G_triangle(SPREAD_VEC2(a), SPREAD_VEC2(b), SPREAD_VEC2(c));
+    }
 }

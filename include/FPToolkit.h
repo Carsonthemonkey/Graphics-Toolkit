@@ -25,6 +25,8 @@ extern int (*G_circle)(double x, double y, double radius);
 
 extern int (*G_fill_circle)(double x, double y, double radius);
 
+int (* G_triangle) (double x0, double y0, double x1, double y1, double x2, double y2) ; 
+
 extern int (*G_point)(double x, double y);
 
 // Saves the current image to a BMP file.
