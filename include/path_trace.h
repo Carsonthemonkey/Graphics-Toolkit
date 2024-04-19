@@ -34,6 +34,6 @@ bool intersect_triangle(Vector3* location_out, Ray ray, Triangle triangle);
  * 
  * @param scene The scene to be drawn to the screen
  */
-void draw_scene(PathTracedScene scene);
+void path_trace_scene(PathTracedScene scene);
 
 #endif
