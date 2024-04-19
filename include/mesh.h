@@ -20,6 +20,9 @@ typedef struct {
     int num_vertices;
     Vertex* vertices;
 
+    Vector3 bounding_box_max;
+    Vector3 bounding_box_min;
+
     double transform[4][4];
     double inverse_transform[4][4];
 } Mesh;
@@ -79,4 +82,11 @@ void rotate_mesh_y_degrees(Mesh* mesh, double degrees);
  * @param degrees the degrees on the z axis to rotate the mesh by
  */
 void rotate_mesh_z_degrees(Mesh* mesh, double degrees);
+
+/**
+ * @brief Computes the bounding box for a given mesh
+ * 
+ * @param mesh 
+ */
+void compute_mesh_bounds(Mesh* mesh);
 #endif

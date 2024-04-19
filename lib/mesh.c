@@ -189,3 +189,28 @@ void rotate_mesh_z_degrees(Mesh* mesh, double degrees){
     M3d_mat_mult(mesh->transform, transform, mesh->transform);
     M3d_mat_mult(mesh->inverse_transform, inverse, mesh->inverse_transform);
 }
+
+/**
+ * @brief Computes and sets the mesh's bounding box
+ * 
+ * @param mesh A pointer to the mesh whose bounding box will be computed
+ */
+void compute_mesh_bounds(Mesh* mesh){
+    Vector3 min = {INFINITY, INFINITY, INFINITY};
+    Vector3 max = {-INFINITY, -INFINITY, -INFINITY};
+
+    for(int i = 0; i < mesh->num_vertices; i++){
+        Vector3 position = mesh->vertices[i].position;
+        
+        if(position.x < min.x) min.x = position.x;
+        if(position.y < min.y) min.y = position.y;
+        if(position.z < min.z) min.z = position.z;
+
+        if(position.x > max.x) max.x = position.x;
+        if(position.y > max.y) max.y = position.y;
+        if(position.z > max.z) max.z = position.z;
+    }
+
+    mesh->bounding_box_max = max;
+    mesh->bounding_box_min = min;
+}
