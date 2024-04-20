@@ -32,9 +32,12 @@ typedef struct {
     Vector3 bounding_box_max;
     Vector3 bounding_box_min;
 
+    bool shade_smooth;
+    PathTracedMaterial material;
+
     double transform[4][4];
     double inverse_transform[4][4];
-    PathTracedMaterial material;
+
 } Mesh;
 
 /**

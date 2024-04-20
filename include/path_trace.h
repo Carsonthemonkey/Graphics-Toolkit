@@ -43,7 +43,7 @@ typedef struct {
  * @return true The ray does intersect the triangle
  * @return false The ray does not intersect the triangle
  */
-bool intersect_triangle(double* t_out, double closest_t, Ray ray, Triangle triangle);
+bool intersect_triangle(double* t_out, Vector2* barycentric_out, double closest_t, Ray ray, Triangle triangle);
 
 /**
  * @brief Draws an entire path traced scene

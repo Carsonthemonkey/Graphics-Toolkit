@@ -12,9 +12,9 @@
 #include "random.h"
 
 const double EPSILON = 0.000001;
-const int NUM_SHADOW_RAYS = 128;
+const int NUM_SHADOW_RAYS = 16;
 
-bool intersect_triangle(double* t_out, double closest_t, Ray ray, Triangle triangle){
+bool intersect_triangle(double* t_out, Vector2* barycentric_out, double closest_t, Ray ray, Triangle triangle){
     //TODO: precompute triangle normal
     //I don't really understand this intuitively. It would be a good idea to go back to this to get a better grasp on it
     Vector3 edge_1 = vec3_sub(triangle.b->position, triangle.a->position);
@@ -40,6 +40,10 @@ bool intersect_triangle(double* t_out, double closest_t, Ray ray, Triangle trian
     double t = vec3_dot_prod(edge_2, edge_1_cross_prod) * inverse_determinant;
     if(t < closest_t && t > EPSILON) {
         if(t_out != NULL) *t_out = t;
+        if(barycentric_out != NULL){
+            barycentric_out->x = u;
+            barycentric_out->y = v;
+        }
         return true;
     }
     return false;
@@ -79,7 +83,7 @@ bool hits_anything(PathTracedScene scene, Ray ray, double distance_limit){
         if(!intersects_bounding_box(mesh, ray)) continue;
         for(int tr = 0; tr < mesh.num_tris; tr++){
             Triangle tri = mesh.tris[tr];
-            if(intersect_triangle(NULL, distance_limit, ray, tri)) return true;
+            if(intersect_triangle(NULL,NULL, distance_limit, ray, tri)) return true;
         }
     }
     return false;
@@ -94,13 +98,26 @@ bool raycast(RayHitInfo* out, PathTracedScene scene, Ray ray){
         if(!intersects_bounding_box(mesh, ray)) continue;
         for(int tr = 0; tr < mesh.num_tris; tr++){
             Triangle tri = mesh.tris[tr];
-            if(intersect_triangle(&t, closest_t, ray, tri)){
+            Vector2 surface_coords;
+            if(intersect_triangle(&t,(mesh.shade_smooth ? &surface_coords : NULL), closest_t, ray, tri)){
                 if(out == NULL) return true;
+
                 did_hit = true;
                 closest_t = t;
                 out->intersected_mesh = mesh;
                 out->distance = t;
-                out->normal = tri.normal;
+                // Compute smooth normal
+                if(mesh.shade_smooth){
+                    Vector3 smooth_normal = vec3_add(
+                        vec3_scale(tri.b->normal, surface_coords.x),
+                        vec3_scale(tri.c->normal, surface_coords.y)
+                    );
+                    smooth_normal = vec3_add(smooth_normal, vec3_scale(tri.a->normal, 1 - surface_coords.x - surface_coords.y));
+                    out->normal = smooth_normal;
+                }
+                else{
+                    out->normal = tri.normal;
+                }
             }
         }
     }
