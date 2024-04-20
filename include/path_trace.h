@@ -27,6 +27,14 @@ typedef struct {
     Vector3 direction;
 } Ray;
 
+// Maybe this should return the specific triangle later but for now this is good
+typedef struct {
+    bool did_hit;
+    double distance;
+    Vector3 normal;
+    Mesh intersected_mesh;
+} RayHitInfo;
+
 /**
  * @brief Finds the intersection of a ray with a given triangle
  * 

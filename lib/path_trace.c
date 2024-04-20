@@ -12,7 +12,7 @@
 #include "random.h"
 
 const double EPSILON = 0.000001;
-const int NUM_SHADOW_RAYS = 1;
+const int NUM_SHADOW_RAYS = 32;
 
 bool intersect_triangle(double* t_out, double closest_t, Ray ray, Triangle triangle){
     //TODO: precompute triangle normal
@@ -72,52 +72,97 @@ bool intersects_bounding_box(Mesh mesh, Ray ray){
     return t_enter <= t_exit && t_exit >= 0;
 }
 
-Color3 path_trace(PathTracedScene scene, Ray ray){
-    Color3 result = {SPREAD_COL3(ray.direction)};
-    Color3 black = {BLACK};
-    Triangle intersected_triangle;
+RayHitInfo raycast(PathTracedScene scene, Ray ray){
+    RayHitInfo result = {.did_hit=false};
     double closest_t = INFINITY;
     double t;
     for(int m = 0; m < scene.num_meshes; m++){
         Mesh mesh = scene.meshes[m];
         if(!intersects_bounding_box(mesh, ray)) continue;
         for(int tr = 0; tr < mesh.num_tris; tr++){
-            if(intersect_triangle(&t, closest_t, ray, mesh.tris[tr])){
+            Triangle tri = mesh.tris[tr];
+            if(intersect_triangle(&t, closest_t, ray, tri)){
+                result.did_hit = true;
                 closest_t = t;
-                // result = mesh.tris[tr];
-                result = mesh.material.base_color;
-                intersected_triangle = mesh.tris[tr];
+                result.intersected_mesh = mesh;
+                result.distance = t;
+                result.normal = tri.normal;
             }
         }
     }
+    return result;
+}
 
-    Vector3 hit_location = vec3_add(ray.origin, vec3_scale(ray.direction, closest_t));
-    // vec3_print(scene.lights[0].position);
-    /* Shadow Rays */
-    Ray shadow_ray = {.origin=vec3_add(hit_location, vec3_scale(intersected_triangle.normal, EPSILON))};
-    Color3 intensity = {0, 0, 0};
-    double shadow_ray_contribution = 1.0 / NUM_SHADOW_RAYS;
+Vector3 ray_hit_location(Ray ray, double distance){
+    return vec3_add(ray.origin, vec3_scale(ray.direction, distance));
+}
+
+//TODO: add different kinds of light support here 
+Color3 shadow_ray(PathTracedScene scene, Vector3 position){
+    // This is not a clamped color
+    Color3 direct_light = {0, 0, 0};
+    Ray shadow = {.origin=position};
     for(int l = 0; l < scene.num_lights; l++){
         PointLight light = scene.lights[l];
-
-        //TODO: put this into it's own function
-        for(int r = 0; r < NUM_SHADOW_RAYS; r++){
-            
+        double shadow_ray_hit_percentage = 0;
+        double light_distance = vec3_magnitude(vec3_sub(light.position, position));
+        for (int r = 0; r < NUM_SHADOW_RAYS; r++){
             Vector3 dest = vec3_add(random_point_in_sphere(light.radius), light.position);
-            double light_distance = vec3_distance(shadow_ray.origin, light.position) - EPSILON;
-            shadow_ray.direction = vec3_normalized(vec3_sub(dest, shadow_ray.origin));
+            shadow.direction = vec3_normalized(vec3_sub(dest, shadow.origin));
 
-            for(int m = 0; m < scene.num_meshes; m++){
-                for(int tr = 0; tr < scene.meshes[m].num_tris; tr++){
-                    if(!intersects_bounding_box(scene.meshes[m], shadow_ray)) continue;
-                    //TODO: make this work with multiple lights
-                    if(intersect_triangle(NULL, light_distance, shadow_ray, scene.meshes[m].tris[tr])) return black;
-                }
-            }
+            //TODO!: optimize this. We only care if we hit any object, so we can return early when we hit something
+            RayHitInfo hit = raycast(scene, shadow);
+            if(!hit.did_hit || hit.distance > light_distance) shadow_ray_hit_percentage += 1.0 / NUM_SHADOW_RAYS;
         }
+        //Scale according to inverse square
+        //* I think this avoids the incident angle/lambertian diffuse or whatever it is called. Cosine weigthing? look into it
+        Color3 contribution = vec3_scale(vec3_scale(light.intensity, shadow_ray_hit_percentage), 1.0 / (light_distance * light_distance));
+        direct_light = vec3_add(contribution, direct_light);
     }
+    return direct_light;
+}
 
-    return result;
+Color3 path_trace(PathTracedScene scene, Ray ray){
+    Color3 black = {BLACK};
+    RayHitInfo hit = raycast(scene, ray);
+
+    /* Environment lighting goes here basically */
+    if(!hit.did_hit) return ray.direction;
+
+    Color3 result = hit.intersected_mesh.material.base_color;
+    Vector3 hit_location = vec3_add(ray.origin, vec3_scale(ray.direction, hit.distance));
+
+    Color3 direct_lighting = shadow_ray(scene, hit_location);
+    return vec3_mult(direct_lighting, result);
+    /* Shadow Rays */
+    // Ray shadow_ray = {.origin=vec3_add(hit_location, vec3_scale(hit.normal, EPSILON))};
+    // Color3 intensity = {0, 0, 0};
+    // double shadow_ray_contribution = 1.0 / NUM_SHADOW_RAYS;
+    // double contribution = 0;
+    
+    // for(int l = 0; l < scene.num_lights; l++){
+    //     PointLight light = scene.lights[l];
+
+    //     //TODO: put this into it's own function
+    //     for(int r = 0; r < NUM_SHADOW_RAYS; r++){
+
+    //         Vector3 dest = vec3_add(random_point_in_sphere(light.radius), light.position);
+    //         double light_distance = vec3_distance(shadow_ray.origin, light.position) - EPSILON;
+    //         shadow_ray.direction = vec3_normalized(vec3_sub(dest, shadow_ray.origin));
+            
+    //         for(int m = 0; m < scene.num_meshes; m++){
+    //             for(int tr = 0; tr < scene.meshes[m].num_tris; tr++){
+    //                 if(!intersects_bounding_box(scene.meshes[m], shadow_ray)) continue;
+    //                 //TODO: make this work with multiple lights
+    //                 if(intersect_triangle(NULL, light_distance, shadow_ray, scene.meshes[m].tris[tr])) goto next_ray;
+    //             }
+    //         }
+    //         contribution += 1.0 / NUM_SHADOW_RAYS;
+    //         next_ray:
+    //     }
+    // }
+
+    // return vec3_scale(result, contribution);
 }
 
 void path_trace_scene(PathTracedScene scene){
@@ -142,6 +187,7 @@ void path_trace_scene(PathTracedScene scene){
             G_rgb(SPREAD_COL3(pixel_color));
             G_pixel(x, y);
         }
+        G_display_image();
     }
 }
 
