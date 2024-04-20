@@ -72,8 +72,8 @@ bool intersects_bounding_box(Mesh mesh, Ray ray){
     return t_enter <= t_exit && t_exit >= 0;
 }
 
-RayHitInfo raycast(PathTracedScene scene, Ray ray){
-    RayHitInfo result = {.did_hit=false};
+bool raycast(RayHitInfo* out, PathTracedScene scene, Ray ray){
+    bool did_hit = false;
     double closest_t = INFINITY;
     double t;
     for(int m = 0; m < scene.num_meshes; m++){
@@ -82,15 +82,16 @@ RayHitInfo raycast(PathTracedScene scene, Ray ray){
         for(int tr = 0; tr < mesh.num_tris; tr++){
             Triangle tri = mesh.tris[tr];
             if(intersect_triangle(&t, closest_t, ray, tri)){
-                result.did_hit = true;
+                if(out == NULL) return true;
+                did_hit = true;
                 closest_t = t;
-                result.intersected_mesh = mesh;
-                result.distance = t;
-                result.normal = tri.normal;
+                out->intersected_mesh = mesh;
+                out->distance = t;
+                out->normal = tri.normal;
             }
         }
     }
-    return result;
+    return did_hit;
 }
 
 Vector3 ray_hit_location(Ray ray, double distance){
@@ -111,8 +112,9 @@ Color3 shadow_ray(PathTracedScene scene, Vector3 position){
             shadow.direction = vec3_normalized(vec3_sub(dest, shadow.origin));
 
             //TODO!: optimize this. We only care if we hit any object, so we can return early when we hit something
-            RayHitInfo hit = raycast(scene, shadow);
-            if(!hit.did_hit || hit.distance > light_distance) shadow_ray_hit_percentage += 1.0 / NUM_SHADOW_RAYS;
+            RayHitInfo hit;
+            bool did_hit = raycast(&hit, scene, shadow);
+            if(!did_hit || hit.distance > light_distance) shadow_ray_hit_percentage += 1.0 / NUM_SHADOW_RAYS;
         }
         //Scale according to inverse square
         //* I think this avoids the incident angle/lambertian diffuse or whatever it is called. Cosine weigthing? look into it
@@ -124,10 +126,11 @@ Color3 shadow_ray(PathTracedScene scene, Vector3 position){
 
 Color3 path_trace(PathTracedScene scene, Ray ray){
     Color3 black = {BLACK};
-    RayHitInfo hit = raycast(scene, ray);
+    RayHitInfo hit;
+    bool did_hit = raycast(&hit, scene, ray);
 
     /* Environment lighting goes here basically */
-    if(!hit.did_hit) return ray.direction;
+    if(!did_hit) return ray.direction;
 
     Color3 result = hit.intersected_mesh.material.base_color;
     Vector3 hit_location = vec3_add(ray.origin, vec3_scale(ray.direction, hit.distance));
