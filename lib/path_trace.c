@@ -12,7 +12,7 @@
 #include "random.h"
 
 const double EPSILON = 0.000001;
-const int NUM_SHADOW_RAYS = 32;
+const int NUM_SHADOW_RAYS = 128;
 
 bool intersect_triangle(double* t_out, double closest_t, Ray ray, Triangle triangle){
     //TODO: precompute triangle normal
@@ -112,7 +112,7 @@ Vector3 ray_hit_location(Ray ray, double distance){
 }
 
 //TODO: add different kinds of light support here 
-Color3 shadow_ray(PathTracedScene scene, Vector3 position){
+Color3 shadow_ray(PathTracedScene scene, Vector3 position, Vector3 surface_normal){
     // This is not a clamped color
     Color3 direct_light = {0, 0, 0};
     Ray shadow = {.origin=position};
@@ -124,11 +124,13 @@ Color3 shadow_ray(PathTracedScene scene, Vector3 position){
             Vector3 dest = vec3_add(random_point_in_sphere(light.radius), light.position);
             shadow.direction = vec3_normalized(vec3_sub(dest, shadow.origin));
 
-            bool did_hit = hits_anything(scene, shadow, light_distance);
-            if(!did_hit) shadow_ray_hit_percentage += 1.0 / NUM_SHADOW_RAYS;
+            if(!hits_anything(scene, shadow, light_distance)){
+                // Lambert's Cosine Law 
+                double incident_dot = fmax(vec3_dot_prod(surface_normal, shadow.direction), 0);
+                shadow_ray_hit_percentage += 1.0 / NUM_SHADOW_RAYS * incident_dot;
+            } 
         }
         //Scale according to inverse square
-        //* I think this avoids the incident angle/lambertian diffuse or whatever it is called. Cosine weigthing? look into it
         Color3 contribution = vec3_scale(vec3_scale(light.intensity, shadow_ray_hit_percentage), 1.0 / (light_distance * light_distance));
         direct_light = vec3_add(contribution, direct_light);
     }
@@ -146,7 +148,8 @@ Color3 path_trace(PathTracedScene scene, Ray ray){
     Color3 result = hit.intersected_mesh.material.base_color;
     Vector3 hit_location = vec3_add(ray.origin, vec3_scale(ray.direction, hit.distance));
 
-    Color3 direct_lighting = shadow_ray(scene, hit_location);
+    // I think phong smooth shading would happen here
+    Color3 direct_lighting = shadow_ray(scene, hit_location, hit.normal);
     return vec3_mult(direct_lighting, result);
 }
 
