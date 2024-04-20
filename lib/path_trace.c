@@ -72,6 +72,19 @@ bool intersects_bounding_box(Mesh mesh, Ray ray){
     return t_enter <= t_exit && t_exit >= 0;
 }
 
+bool hits_anything(PathTracedScene scene, Ray ray, double distance_limit){
+    for(int m = 0; m < scene.num_meshes; m++){
+        Mesh mesh = scene.meshes[m];
+        double t;
+        if(!intersects_bounding_box(mesh, ray)) continue;
+        for(int tr = 0; tr < mesh.num_tris; tr++){
+            Triangle tri = mesh.tris[tr];
+            if(intersect_triangle(NULL, distance_limit, ray, tri)) return true;
+        }
+    }
+    return false;
+}
+
 bool raycast(RayHitInfo* out, PathTracedScene scene, Ray ray){
     bool did_hit = false;
     double closest_t = INFINITY;
@@ -111,10 +124,8 @@ Color3 shadow_ray(PathTracedScene scene, Vector3 position){
             Vector3 dest = vec3_add(random_point_in_sphere(light.radius), light.position);
             shadow.direction = vec3_normalized(vec3_sub(dest, shadow.origin));
 
-            //TODO!: optimize this. We only care if we hit any object, so we can return early when we hit something
-            RayHitInfo hit;
-            bool did_hit = raycast(&hit, scene, shadow);
-            if(!did_hit || hit.distance > light_distance) shadow_ray_hit_percentage += 1.0 / NUM_SHADOW_RAYS;
+            bool did_hit = hits_anything(scene, shadow, light_distance);
+            if(!did_hit) shadow_ray_hit_percentage += 1.0 / NUM_SHADOW_RAYS;
         }
         //Scale according to inverse square
         //* I think this avoids the incident angle/lambertian diffuse or whatever it is called. Cosine weigthing? look into it
@@ -137,35 +148,6 @@ Color3 path_trace(PathTracedScene scene, Ray ray){
 
     Color3 direct_lighting = shadow_ray(scene, hit_location);
     return vec3_mult(direct_lighting, result);
-    /* Shadow Rays */
-    // Ray shadow_ray = {.origin=vec3_add(hit_location, vec3_scale(hit.normal, EPSILON))};
-    // Color3 intensity = {0, 0, 0};
-    // double shadow_ray_contribution = 1.0 / NUM_SHADOW_RAYS;
-    // double contribution = 0;
-    
-    // for(int l = 0; l < scene.num_lights; l++){
-    //     PointLight light = scene.lights[l];
-
-    //     //TODO: put this into it's own function
-    //     for(int r = 0; r < NUM_SHADOW_RAYS; r++){
-
-    //         Vector3 dest = vec3_add(random_point_in_sphere(light.radius), light.position);
-    //         double light_distance = vec3_distance(shadow_ray.origin, light.position) - EPSILON;
-    //         shadow_ray.direction = vec3_normalized(vec3_sub(dest, shadow_ray.origin));
-            
-    //         for(int m = 0; m < scene.num_meshes; m++){
-    //             for(int tr = 0; tr < scene.meshes[m].num_tris; tr++){
-    //                 if(!intersects_bounding_box(scene.meshes[m], shadow_ray)) continue;
-    //                 //TODO: make this work with multiple lights
-    //                 if(intersect_triangle(NULL, light_distance, shadow_ray, scene.meshes[m].tris[tr])) goto next_ray;
-    //             }
-    //         }
-    //         contribution += 1.0 / NUM_SHADOW_RAYS;
-    //         next_ray:
-    //     }
-    // }
-
-    // return vec3_scale(result, contribution);
 }
 
 void path_trace_scene(PathTracedScene scene){
