@@ -244,7 +244,7 @@ struct PathTracingThreadInfo {
 
 void* run_render_thread(void* path_tracing_thread_info){
     struct PathTracingThreadInfo info = *(struct PathTracingThreadInfo*)path_tracing_thread_info;
-    printf("starting thread at: %i\n", info.y_start);
+    printf("starting thread at: %i\n", info.y_end);
     path_trace_scene(info.scene, info.y_start, info.y_end);
     return 0;
 }
@@ -260,8 +260,8 @@ void path_trace_scene_multithreaded(PathTracedScene scene){
         // set up args
         thread_args[t].scene = scene;
         // Fix rounding errors here
-        thread_args[t].y_start = t * (scene.height / num_threads);
-        thread_args[t].y_end = (t + 1) * (scene.height / num_threads);
+        thread_args[t].y_start = (int)(t * ((double)scene.height / num_threads));
+        thread_args[t].y_end = (int)((t + 1) * ((double)scene.height / num_threads));
 
         pthread_create(&threads[t], NULL, run_render_thread, (void*)&thread_args[t]);
     }
