@@ -194,19 +194,18 @@ void path_trace_scene(PathTracedScene scene, int y_start, int y_end){
             Color3 pixel_color = {0, 0, 0};
             Vector3 focal_point = vec3_add(scene.main_camera->eye, vec3_scale(world_space_dir, scene.main_camera->focal_length));
             for(int r = 0; r < NUM_CAMERA_RAYS; r++){
-                // For depth of field / AA
-                Ray jittered_ray = ray;
+                /* Depth of Field and Anti-Aliasing */
                 Vector2 jitter = random_point_in_circle(scene.main_camera->depth_of_field);
-                jittered_ray.origin = vec3_add(ray.origin, 
-                    vec3_sub(mat4_mult_point((Vector3){SPREAD_VEC2(jitter), 0}, scene.main_camera->inverse_view_matrix),
-                    scene.main_camera->eye)
-                );
-                // jittered_ray.direction = vec3_normalized(vec3_sub(focal_point, jittered_ray.origin));
-                jittered_ray.direction = vec3_normalized(vec3_sub(focal_point, jittered_ray.origin));;
+                Ray jittered_ray = {
+                    .origin=vec3_add(ray.origin, 
+                        vec3_sub(mat4_mult_point((Vector3){SPREAD_VEC2(jitter), 0}, scene.main_camera->inverse_view_matrix),
+                        scene.main_camera->eye)
+                    ),
+                    .direction=vec3_normalized(vec3_sub(focal_point, jittered_ray.origin))
+                };
                 pixel_color = vec3_add(pixel_color, path_trace(scene, jittered_ray));
             }
             pixel_color = vec3_scale(pixel_color, 1.0 / NUM_CAMERA_RAYS);
-            // Color3 pixel_color = path_trace(scene, ray);
             set_pixel(scene.screen_buffer, pixel_color, scene.width, x, y);
         }
     }
