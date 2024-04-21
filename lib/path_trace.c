@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <math.h>
+#include <unistd.h>
+#include <pthread.h>
 #include "path_trace.h"
 #include "FPToolkit.h"
 #include "trig.h"
@@ -10,7 +12,6 @@
 #include "vector.h"
 #include "mesh.h"
 #include "random.h"
-
 const double EPSILON = 0.000001;
 const int NUM_SHADOW_RAYS = 16;
 
@@ -170,13 +171,13 @@ Color3 path_trace(PathTracedScene scene, Ray ray){
     return vec3_mult(direct_lighting, result);
 }
 
-void path_trace_scene(PathTracedScene scene){
+void path_trace_scene(PathTracedScene scene, int y_start, int y_end){
     double dwidth = (double)scene.width;
     double dheight = (double)scene.height;
     //TODO: obligatory "make this work for non square aspect ratios"
     double film_extent = tan(to_radians(scene.main_camera->half_fov_degrees));
 
-    for(int y = 0; y < scene.height; y++){
+    for(int y = y_start; y < y_end; y++){
         for(int x = 0; x < scene.width; x++){
             Vector3 pixel_camera_space = {
                 ((x - (dwidth / 2)) / dwidth) * (film_extent * 2),
@@ -193,6 +194,39 @@ void path_trace_scene(PathTracedScene scene){
             G_pixel(x, y);
         }
         G_display_image();
+    }
+}
+
+struct PathTracingThreadInfo {
+    PathTracedScene scene;
+    int y_start;
+    int y_end;
+};
+
+void* run_render_thread(void* path_tracing_thread_info){
+    struct PathTracingThreadInfo info = *(struct PathTracingThreadInfo*)path_tracing_thread_info;
+    printf("starting thread at: %i\n", info.y_start);
+    path_trace_scene(info.scene, info.y_start, info.y_end);
+    return 0;
+}
+
+void path_trace_scene_multithreaded(PathTracedScene scene){
+    //* This probably only works on Mac, so maybe threads should just be a CLI arg instead
+    int num_threads = sysconf(_SC_NPROCESSORS_ONLN);
+    pthread_t threads[num_threads];
+    struct PathTracingThreadInfo thread_args[num_threads];
+
+    for(int t = 0; t < num_threads; t++){
+        // set up args
+        thread_args[t].scene = scene;
+        thread_args[t].y_start = t * (scene.height / num_threads);
+        thread_args[t].y_end = (t + 1) * (scene.height / num_threads);
+
+        pthread_create(&threads[t], NULL, run_render_thread, (void*)&thread_args[t]);
+    }
+    // Join threads
+    for(int t = 0; t < num_threads; t++){
+        pthread_join(threads[t], NULL);
     }
 }
 

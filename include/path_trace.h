@@ -50,7 +50,14 @@ bool intersect_triangle(double* t_out, Vector2* barycentric_out, double closest_
  * 
  * @param scene The scene to be drawn to the screen
  */
-void path_trace_scene(PathTracedScene scene);
+void path_trace_scene(PathTracedScene scene, int y_start, int y_end);
+
+/**
+ * @brief Draws an entire path traced scene using multiple threads
+ * 
+ * @param scene The scene to be drawn to the screen
+ */
+void path_trace_scene_multithreaded(PathTracedScene scene);
 
 /**
  * @brief Draws a point light gizmo in the scene
