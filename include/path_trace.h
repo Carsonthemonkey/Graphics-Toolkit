@@ -38,7 +38,8 @@ typedef struct {
 /**
  * @brief Finds the intersection of a ray with a given triangle
  * 
- * @param location_out A vector to write the intersection location to
+ * @param t_out A pointer to save the distance of the triangle intersections
+ * @param barycentric_out A pointer to save the barycentric coordinates of the triangle intersection
  * @param ray The ray to be intersected
  * @param triangle The triangle with which to attempt the intersection
  * @return true The ray does intersect the triangle
@@ -66,6 +67,7 @@ Color3* create_screen_buffer(int width, int height);
  * @brief Get the color of a given pixel in the screen buffer
  * 
  * @param screen_buffer The screen buffer to sample
+ * @param width The width of the screen
  * @param x The x coordinate of the pixel
  * @param y The y coordinate of the pixel
  * @return Color3 The color at the x and y point
@@ -77,6 +79,7 @@ Color3 get_pixel(Color3* screen_buffer, int width, int x, int y);
  * 
  * @param screen_buffer The screen buffer to set the pixel on
  * @param pixel The color of the pixel
+ * @param width The width of the screen
  * @param x The x coordinate of the pixel
  * @param y The y coordinate of the pixel
  */

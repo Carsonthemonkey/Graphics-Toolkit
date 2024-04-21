@@ -193,11 +193,7 @@ void path_trace_scene(PathTracedScene scene, int y_start, int y_end){
             };
             Color3 pixel_color = path_trace(scene, ray);
             set_pixel(scene.screen_buffer, pixel_color, scene.width, x, y);
-            // G_rgb(SPREAD_COL3(pixel_color));
-            // G_pixel(x, y);
-            // G_pixel_thread_safe(x, y);
         }
-        // G_display_image();
     }
 }
 
@@ -244,7 +240,6 @@ struct PathTracingThreadInfo {
 
 void* run_render_thread(void* path_tracing_thread_info){
     struct PathTracingThreadInfo info = *(struct PathTracingThreadInfo*)path_tracing_thread_info;
-    printf("starting thread at: %i\n", info.y_end);
     path_trace_scene(info.scene, info.y_start, info.y_end);
     return 0;
 }
