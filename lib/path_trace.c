@@ -2,6 +2,7 @@
 #include <math.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <pthread.h>
 #include "path_trace.h"
 #include "FPToolkit.h"
@@ -172,7 +173,6 @@ Color3 path_trace(PathTracedScene scene, Ray ray){
     return vec3_mult(direct_lighting, result);
 }
 
-
 void path_trace_scene(PathTracedScene scene, int y_start, int y_end){
     double dwidth = (double)scene.width;
     double dheight = (double)scene.height;
@@ -249,6 +249,19 @@ void* run_render_thread(void* path_tracing_thread_info){
     return 0;
 }
 
+volatile bool draw_buffer = true;
+
+void* live_draw_buffer(void* path_tracing_thread_info){
+    struct PathTracingThreadInfo info = *(struct PathTracingThreadInfo*)path_tracing_thread_info;
+    while(draw_buffer){
+        draw_screen_buffer(info.scene.screen_buffer, info.scene.width, info.scene.height);
+        G_display_image();
+        //TODO: allow for a delay here
+    }
+    return 0;
+}
+
+const bool LIVE_DRAW = true;
 
 void path_trace_scene_multithreaded(PathTracedScene scene){
     //* This probably only works on Mac, so maybe threads should just be a CLI arg instead
@@ -265,9 +278,21 @@ void path_trace_scene_multithreaded(PathTracedScene scene){
 
         pthread_create(&threads[t], NULL, run_render_thread, (void*)&thread_args[t]);
     }
+    pthread_t draw_thread;
+    if(LIVE_DRAW){
+        pthread_create(&draw_thread, NULL, live_draw_buffer, (void*)&thread_args[0]); // pass it any info struct for now
+    }
     // Join threads
     for(int t = 0; t < num_threads; t++){
         pthread_join(threads[t], NULL);
+    }
+    if(LIVE_DRAW){
+        draw_buffer = false;
+        pthread_join(draw_thread, NULL);
+        draw_buffer = true;
+    }
+    else{
+        draw_screen_buffer(scene.screen_buffer, scene.width, scene.height);
     }
 }
 
