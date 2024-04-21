@@ -16,7 +16,10 @@ typedef struct {
 typedef struct {
     int width, height;
     Color3* screen_buffer;
+
     Camera* main_camera;
+    double ray_origin_jitter; // For depth of field
+
     int num_meshes;
     Mesh* meshes;
     int num_lights;

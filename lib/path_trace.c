@@ -15,7 +15,8 @@
 #include "mesh.h"
 #include "random.h"
 const double EPSILON = 0.000001;
-const int NUM_SHADOW_RAYS = 16;
+const int NUM_SHADOW_RAYS = 2;
+const int NUM_CAMERA_RAYS = 16;
 
 bool intersect_triangle(double* t_out, Vector2* barycentric_out, double closest_t, Ray ray, Triangle triangle){
     //TODO: precompute triangle normal
@@ -158,7 +159,6 @@ Color3 shadow_ray(PathTracedScene scene, Vector3 position, Vector3 surface_norma
 }
 
 Color3 path_trace(PathTracedScene scene, Ray ray){
-    Color3 black = {BLACK};
     RayHitInfo hit;
     bool did_hit = raycast(&hit, scene, ray);
 
@@ -191,7 +191,15 @@ void path_trace_scene(PathTracedScene scene, int y_start, int y_end){
                 .origin=scene.main_camera->eye,
                 .direction=world_space_dir
             };
-            Color3 pixel_color = path_trace(scene, ray);
+            Color3 pixel_color = {0, 0, 0};
+            for(int r = 0; r < NUM_CAMERA_RAYS; r++){
+                // For depth of field / AA
+                Ray jittered_ray = ray;
+                jittered_ray.origin = vec3_add(ray.origin, random_point_in_sphere(scene.ray_origin_jitter));
+                pixel_color = vec3_add(pixel_color, path_trace(scene, jittered_ray));
+            }
+            pixel_color = vec3_scale(pixel_color, 1.0 / NUM_CAMERA_RAYS);
+            // Color3 pixel_color = path_trace(scene, ray);
             set_pixel(scene.screen_buffer, pixel_color, scene.width, x, y);
         }
     }
