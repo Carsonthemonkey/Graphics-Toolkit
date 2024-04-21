@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <pthread.h>
 #include "path_trace.h"
 #include "FPToolkit.h"
@@ -171,6 +172,7 @@ Color3 path_trace(PathTracedScene scene, Ray ray){
     return vec3_mult(direct_lighting, result);
 }
 
+
 void path_trace_scene(PathTracedScene scene, int y_start, int y_end){
     double dwidth = (double)scene.width;
     double dheight = (double)scene.height;
@@ -190,10 +192,47 @@ void path_trace_scene(PathTracedScene scene, int y_start, int y_end){
                 .direction=world_space_dir
             };
             Color3 pixel_color = path_trace(scene, ray);
-            G_rgb(SPREAD_COL3(pixel_color));
+            set_pixel(scene.screen_buffer, pixel_color, scene.width, x, y);
+            // G_rgb(SPREAD_COL3(pixel_color));
+            // G_pixel(x, y);
+            // G_pixel_thread_safe(x, y);
+        }
+        // G_display_image();
+    }
+}
+
+Color3* create_screen_buffer(int width, int height){
+    Color3* buffer = (Color3*)malloc(sizeof(Color3) * width * height);
+    if(buffer == NULL){
+        fprintf(stderr, "Failed to allocate memory for screen buffer\n");
+        exit(1);
+    }
+    return buffer;
+}
+
+Color3 get_pixel(Color3* screen_buffer, int width, int x, int y){
+    return screen_buffer[(width * y) + x];
+}
+
+void set_pixel(Color3* screen_buffer, Color3 pixel, int width, int x, int y){
+    screen_buffer[(width * y) + x] = pixel;
+}
+
+void draw_screen_buffer(Color3* screen_buffer, int width, int height){
+    for(int y = 0; y < height; y++){
+        for (int x = 0; x < width; x++){
+            Color3 color = get_pixel(screen_buffer, width, x, y);
+            G_rgb(SPREAD_COL3(color));
             G_pixel(x, y);
         }
-        G_display_image();
+    }
+}
+
+void clear_screen_buffer(Color3* screen_buffer, Color3 color, int width, int height){
+    for (int y = 0; y < height; y++){
+        for (int x = 0; x < width; x++){
+            set_pixel(screen_buffer, color, width, x, y);
+        }
     }
 }
 
@@ -210,6 +249,7 @@ void* run_render_thread(void* path_tracing_thread_info){
     return 0;
 }
 
+
 void path_trace_scene_multithreaded(PathTracedScene scene){
     //* This probably only works on Mac, so maybe threads should just be a CLI arg instead
     int num_threads = sysconf(_SC_NPROCESSORS_ONLN);
@@ -219,6 +259,7 @@ void path_trace_scene_multithreaded(PathTracedScene scene){
     for(int t = 0; t < num_threads; t++){
         // set up args
         thread_args[t].scene = scene;
+        // Fix rounding errors here
         thread_args[t].y_start = t * (scene.height / num_threads);
         thread_args[t].y_end = (t + 1) * (scene.height / num_threads);
 
