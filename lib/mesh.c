@@ -243,7 +243,13 @@ void debug_draw_mesh(Mesh mesh, Camera cam, int width, int height){
         point_to_window(&b, tri.b->position, cam, width, height);
         point_to_window(&c, tri.c->position, cam, width, height);
         
-        G_rgb(SPREAD_COL3(mesh.material.base_color));
+        Vector3 triangle_center = vec3_scale(vec3_add(vec3_add(tri.a->position, tri.b->position), tri.c->position), 1.0 / 3);
+        if(vec3_distance(triangle_center, cam.eye) > cam.focal_length){
+            G_rgb(SPREAD_COL3(vec3_scale(mesh.material.base_color, 0.5)));
+        }
+        else {
+            G_rgb(SPREAD_COL3(mesh.material.base_color));
+        }
         G_triangle(SPREAD_VEC2(a), SPREAD_VEC2(b), SPREAD_VEC2(c));
     }
 }
