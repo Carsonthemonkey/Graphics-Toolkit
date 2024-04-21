@@ -21,3 +21,11 @@ Vector3 random_point_in_sphere(double sphere_radius){
     double z = sphere_radius * cos(phi);
     return (Vector3){x, y, z};
 }
+
+Vector2 random_point_in_circle(double circle_radius){
+    double r = circle_radius * sqrt(rand_double());
+    double theta = 2 * M_PI * rand_double();
+    double x = r * cos(theta);
+    double y = r * sin(theta);
+    return (Vector2){x, y};
+}

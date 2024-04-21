@@ -16,6 +16,7 @@
 #include "random.h"
 const double EPSILON = 0.000001;
 const int NUM_SHADOW_RAYS = 16;
+const int NUM_CAMERA_RAYS = 16;
 
 bool intersect_triangle(double* t_out, Vector2* barycentric_out, double closest_t, Ray ray, Triangle triangle){
     //TODO: precompute triangle normal
@@ -158,7 +159,6 @@ Color3 shadow_ray(PathTracedScene scene, Vector3 position, Vector3 surface_norma
 }
 
 Color3 path_trace(PathTracedScene scene, Ray ray){
-    Color3 black = {BLACK};
     RayHitInfo hit;
     bool did_hit = raycast(&hit, scene, ray);
 
@@ -191,7 +191,21 @@ void path_trace_scene(PathTracedScene scene, int y_start, int y_end){
                 .origin=scene.main_camera->eye,
                 .direction=world_space_dir
             };
-            Color3 pixel_color = path_trace(scene, ray);
+            Color3 pixel_color = {0, 0, 0};
+            Vector3 focal_point = vec3_add(scene.main_camera->eye, vec3_scale(world_space_dir, scene.main_camera->focal_length));
+            for(int r = 0; r < NUM_CAMERA_RAYS; r++){
+                /* Depth of Field and Anti-Aliasing */
+                Vector2 jitter = random_point_in_circle(scene.main_camera->depth_of_field);
+                Ray jittered_ray = {
+                    .origin=vec3_add(ray.origin, 
+                        vec3_sub(mat4_mult_point((Vector3){SPREAD_VEC2(jitter), 0}, scene.main_camera->inverse_view_matrix),
+                        scene.main_camera->eye)
+                    ),
+                    .direction=vec3_normalized(vec3_sub(focal_point, jittered_ray.origin))
+                };
+                pixel_color = vec3_add(pixel_color, path_trace(scene, jittered_ray));
+            }
+            pixel_color = vec3_scale(pixel_color, 1.0 / NUM_CAMERA_RAYS);
             set_pixel(scene.screen_buffer, pixel_color, scene.width, x, y);
         }
     }

@@ -15,6 +15,9 @@ typedef struct Camera {
     Vector3 coi;
     Vector3 up;
     double half_fov_degrees;
+    double focal_length;
+    double depth_of_field;
+    
     double near_clip_plane;
     double far_clip_plane;
     double view_matrix[4][4];
