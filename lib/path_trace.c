@@ -1,5 +1,9 @@
 #include <stdio.h>
 #include <math.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <pthread.h>
 #include "path_trace.h"
 #include "FPToolkit.h"
 #include "trig.h"
@@ -10,7 +14,6 @@
 #include "vector.h"
 #include "mesh.h"
 #include "random.h"
-
 const double EPSILON = 0.000001;
 const int NUM_SHADOW_RAYS = 16;
 
@@ -170,13 +173,13 @@ Color3 path_trace(PathTracedScene scene, Ray ray){
     return vec3_mult(direct_lighting, result);
 }
 
-void path_trace_scene(PathTracedScene scene){
+void path_trace_scene(PathTracedScene scene, int y_start, int y_end){
     double dwidth = (double)scene.width;
     double dheight = (double)scene.height;
     //TODO: obligatory "make this work for non square aspect ratios"
     double film_extent = tan(to_radians(scene.main_camera->half_fov_degrees));
 
-    for(int y = 0; y < scene.height; y++){
+    for(int y = y_start; y < y_end; y++){
         for(int x = 0; x < scene.width; x++){
             Vector3 pixel_camera_space = {
                 ((x - (dwidth / 2)) / dwidth) * (film_extent * 2),
@@ -189,10 +192,102 @@ void path_trace_scene(PathTracedScene scene){
                 .direction=world_space_dir
             };
             Color3 pixel_color = path_trace(scene, ray);
-            G_rgb(SPREAD_COL3(pixel_color));
+            set_pixel(scene.screen_buffer, pixel_color, scene.width, x, y);
+        }
+    }
+}
+
+Color3* create_screen_buffer(int width, int height){
+    Color3* buffer = (Color3*)malloc(sizeof(Color3) * width * height);
+    if(buffer == NULL){
+        fprintf(stderr, "Failed to allocate memory for screen buffer\n");
+        exit(1);
+    }
+    return buffer;
+}
+
+Color3 get_pixel(Color3* screen_buffer, int width, int x, int y){
+    return screen_buffer[(width * y) + x];
+}
+
+void set_pixel(Color3* screen_buffer, Color3 pixel, int width, int x, int y){
+    screen_buffer[(width * y) + x] = pixel;
+}
+
+void draw_screen_buffer(Color3* screen_buffer, int width, int height){
+    for(int y = 0; y < height; y++){
+        for (int x = 0; x < width; x++){
+            Color3 color = get_pixel(screen_buffer, width, x, y);
+            G_rgb(SPREAD_COL3(color));
             G_pixel(x, y);
         }
+    }
+}
+
+void clear_screen_buffer(Color3* screen_buffer, Color3 color, int width, int height){
+    for (int y = 0; y < height; y++){
+        for (int x = 0; x < width; x++){
+            set_pixel(screen_buffer, color, width, x, y);
+        }
+    }
+}
+
+struct PathTracingThreadInfo {
+    PathTracedScene scene;
+    int y_start;
+    int y_end;
+};
+
+void* run_render_thread(void* path_tracing_thread_info){
+    struct PathTracingThreadInfo info = *(struct PathTracingThreadInfo*)path_tracing_thread_info;
+    path_trace_scene(info.scene, info.y_start, info.y_end);
+    return 0;
+}
+
+volatile bool draw_buffer = true;
+
+void* live_draw_buffer(void* path_tracing_thread_info){
+    struct PathTracingThreadInfo info = *(struct PathTracingThreadInfo*)path_tracing_thread_info;
+    while(draw_buffer){
+        draw_screen_buffer(info.scene.screen_buffer, info.scene.width, info.scene.height);
         G_display_image();
+        //TODO: allow for a delay here
+    }
+    return 0;
+}
+
+const bool LIVE_DRAW = true;
+
+void path_trace_scene_multithreaded(PathTracedScene scene){
+    //* This probably only works on Mac, so maybe threads should just be a CLI arg instead
+    int num_threads = sysconf(_SC_NPROCESSORS_ONLN);
+    pthread_t threads[num_threads];
+    struct PathTracingThreadInfo thread_args[num_threads];
+
+    for(int t = 0; t < num_threads; t++){
+        // set up args
+        thread_args[t].scene = scene;
+        // Fix rounding errors here
+        thread_args[t].y_start = (int)(t * ((double)scene.height / num_threads));
+        thread_args[t].y_end = (int)((t + 1) * ((double)scene.height / num_threads));
+
+        pthread_create(&threads[t], NULL, run_render_thread, (void*)&thread_args[t]);
+    }
+    pthread_t draw_thread;
+    if(LIVE_DRAW){
+        pthread_create(&draw_thread, NULL, live_draw_buffer, (void*)&thread_args[0]); // pass it any info struct for now
+    }
+    // Join threads
+    for(int t = 0; t < num_threads; t++){
+        pthread_join(threads[t], NULL);
+    }
+    if(LIVE_DRAW){
+        draw_buffer = false;
+        pthread_join(draw_thread, NULL);
+        draw_buffer = true;
+    }
+    else{
+        draw_screen_buffer(scene.screen_buffer, scene.width, scene.height);
     }
 }
 
