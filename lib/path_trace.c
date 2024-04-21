@@ -192,11 +192,11 @@ void path_trace_scene(PathTracedScene scene, int y_start, int y_end){
                 .direction=world_space_dir
             };
             Color3 pixel_color = {0, 0, 0};
-            Vector3 focal_point = vec3_add(scene.main_camera->eye, vec3_scale(world_space_dir, scene.main_camera->far_clip_plane));
+            Vector3 focal_point = vec3_add(scene.main_camera->eye, vec3_scale(world_space_dir, scene.main_camera->focal_length));
             for(int r = 0; r < NUM_CAMERA_RAYS; r++){
                 // For depth of field / AA
                 Ray jittered_ray = ray;
-                Vector2 jitter = random_point_in_circle(scene.ray_origin_jitter);
+                Vector2 jitter = random_point_in_circle(scene.main_camera->depth_of_field);
                 jittered_ray.origin = vec3_add(ray.origin, 
                     vec3_sub(mat4_mult_point((Vector3){SPREAD_VEC2(jitter), 0}, scene.main_camera->inverse_view_matrix),
                     scene.main_camera->eye)
