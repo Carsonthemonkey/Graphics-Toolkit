@@ -15,8 +15,9 @@
 #include "mesh.h"
 #include "random.h"
 const double EPSILON = 0.000001;
-const int NUM_SHADOW_RAYS = 16;
-const int NUM_CAMERA_RAYS = 16;
+const int NUM_SHADOW_RAYS = 1;
+const int NUM_CAMERA_RAYS = 64;
+const int MAX_DIFFUSE_BOUNCES = 8;
 
 bool intersect_triangle(double* t_out, Vector2* barycentric_out, double closest_t, Ray ray, Triangle triangle){
     //TODO: precompute triangle normal
@@ -133,7 +134,7 @@ Vector3 ray_hit_location(Ray ray, double distance){
 }
 
 //TODO: add different kinds of light support here 
-Color3 shadow_ray(PathTracedScene scene, Vector3 position, Vector3 surface_normal){
+Color3 direct_lighting(PathTracedScene scene, Vector3 position, Vector3 surface_normal){
     // This is not a clamped color
     Color3 direct_light = {0, 0, 0};
     Ray shadow = {.origin=position};
@@ -158,19 +159,33 @@ Color3 shadow_ray(PathTracedScene scene, Vector3 position, Vector3 surface_norma
     return direct_light;
 }
 
-Color3 path_trace(PathTracedScene scene, Ray ray){
+
+Color3 path_trace(PathTracedScene scene, Ray ray, int depth){
     RayHitInfo hit;
     bool did_hit = raycast(&hit, scene, ray);
 
     /* Environment lighting goes here basically */
-    if(!did_hit) return ray.direction;
+    // if(!did_hit) return ray.direction;
+    if(!did_hit) return (Color3){0, 0, 0}; 
 
     Color3 result = hit.intersected_mesh.material.base_color;
     Vector3 hit_location = vec3_add(ray.origin, vec3_scale(ray.direction, hit.distance));
 
     // I think phong smooth shading would happen here
-    Color3 direct_lighting = shadow_ray(scene, hit_location, hit.normal);
-    return vec3_mult(direct_lighting, result);
+    Color3 lighting = direct_lighting(scene, hit_location, hit.normal);
+
+    if(depth > 0){
+        /* Indirect Lighting */
+        // This is the lambertian diffuse model / BRDF
+        Vector3 direction = vec3_normalized(vec3_add(random_point_in_sphere(1), hit.normal));
+        Ray indirect_ray = {
+            .origin=hit_location,
+            .direction=direction
+        };
+        Color3 indirect_lighting = path_trace(scene, indirect_ray, depth - 1);
+        lighting = vec3_add(lighting, indirect_lighting);
+    }
+    return vec3_mult(lighting, result);
 }
 
 void path_trace_scene(PathTracedScene scene, int y_start, int y_end){
@@ -203,7 +218,7 @@ void path_trace_scene(PathTracedScene scene, int y_start, int y_end){
                     ),
                     .direction=vec3_normalized(vec3_sub(focal_point, jittered_ray.origin))
                 };
-                pixel_color = vec3_add(pixel_color, path_trace(scene, jittered_ray));
+                pixel_color = vec3_add(pixel_color, path_trace(scene, jittered_ray, MAX_DIFFUSE_BOUNCES));
             }
             pixel_color = vec3_scale(pixel_color, 1.0 / NUM_CAMERA_RAYS);
             set_pixel(scene.screen_buffer, pixel_color, scene.width, x, y);
