@@ -16,7 +16,7 @@
 #include "random.h"
 const double EPSILON = 0.000001;
 const int NUM_SHADOW_RAYS = 1;
-const int NUM_CAMERA_RAYS = 64;
+const int NUM_CAMERA_RAYS = 512;
 const int MAX_DIFFUSE_BOUNCES = 8;
 
 bool intersect_triangle(double* t_out, Vector2* barycentric_out, double closest_t, Ray ray, Triangle triangle){
@@ -172,8 +172,8 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth){
     Vector3 hit_location = vec3_add(ray.origin, vec3_scale(ray.direction, hit.distance));
 
     // I think phong smooth shading would happen here
-    Color3 lighting = direct_lighting(scene, hit_location, hit.normal);
-
+    Color3 lighting = vec3_scale(hit.intersected_mesh.material.emissive, hit.intersected_mesh.material.emission_strength);
+    lighting = vec3_add(lighting, direct_lighting(scene, hit_location, hit.normal));
     if(depth > 0){
         /* Indirect Lighting */
         // This is the lambertian diffuse model / BRDF
@@ -185,7 +185,7 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth){
         Color3 indirect_lighting = path_trace(scene, indirect_ray, depth - 1);
         lighting = vec3_add(lighting, indirect_lighting);
     }
-    return vec3_mult(lighting, result);
+    return vec3_mult(lighting, hit.intersected_mesh.material.base_color);
 }
 
 void path_trace_scene(PathTracedScene scene, int y_start, int y_end){

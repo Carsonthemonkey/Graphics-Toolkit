@@ -7,6 +7,8 @@
 //TODO: put this in path_trace.h but its causing include errors right now
 typedef struct {
     Color3 base_color;
+    Color3 emissive;
+    double emission_strength;
 } PathTracedMaterial;
 
 typedef struct {
