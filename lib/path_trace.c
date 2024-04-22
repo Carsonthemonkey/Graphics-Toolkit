@@ -174,7 +174,7 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth){
     /* Emissive materials */
     Color3 lighting = vec3_scale(hit.intersected_mesh.material.emissive, hit.intersected_mesh.material.emission_strength);
     /* Direct Lighting */
-    lighting = vec3_add(lighting, direct_lighting(scene, hit_location, hit.normal));
+    lighting = vec3_add(lighting, vec3_mult(direct_lighting(scene, hit_location, hit.normal), hit.intersected_mesh.material.base_color));
     if(depth > 0){
         /* Indirect Lighting */
         Color3 bounce_lighting = {0, 0, 0};
