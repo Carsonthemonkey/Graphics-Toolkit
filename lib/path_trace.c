@@ -15,8 +15,8 @@
 #include "mesh.h"
 #include "random.h"
 const double EPSILON = 0.000001;
-const int NUM_SHADOW_RAYS = 1;
-const int NUM_CAMERA_RAYS = 512;
+const int NUM_SHADOW_RAYS = 2;
+const int NUM_CAMERA_RAYS = 128;
 const int MAX_DIFFUSE_BOUNCES = 8;
 
 bool intersect_triangle(double* t_out, Vector2* barycentric_out, double closest_t, Ray ray, Triangle triangle){
@@ -171,21 +171,41 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth){
     Color3 result = hit.intersected_mesh.material.base_color;
     Vector3 hit_location = vec3_add(ray.origin, vec3_scale(ray.direction, hit.distance));
 
-    // I think phong smooth shading would happen here
+    /* Emissive materials */
     Color3 lighting = vec3_scale(hit.intersected_mesh.material.emissive, hit.intersected_mesh.material.emission_strength);
+    /* Direct Lighting */
     lighting = vec3_add(lighting, direct_lighting(scene, hit_location, hit.normal));
     if(depth > 0){
         /* Indirect Lighting */
-        // This is the lambertian diffuse model / BRDF
-        Vector3 direction = vec3_normalized(vec3_add(random_point_in_sphere(1), hit.normal));
-        Ray indirect_ray = {
-            .origin=hit_location,
-            .direction=direction
-        };
-        Color3 indirect_lighting = path_trace(scene, indirect_ray, depth - 1);
-        lighting = vec3_add(lighting, indirect_lighting);
+        Color3 bounce_lighting = {0, 0, 0};
+        if(rand_double() < hit.intersected_mesh.material.specular){
+            /* Specular */
+            Vector3 diffuse_direction;
+            //Optimize for perfectly reflective surfaces
+            if(hit.intersected_mesh.material.roughness > 0) diffuse_direction = vec3_normalized(vec3_add(random_point_in_sphere(1), hit.normal)); 
+            Vector3 reflection = vec3_reflection(ray.direction, hit.normal);
+            //TODO: Apparently interpolating the normal instead of the ray direction is better
+            Vector3 specular_direction = vec3_normalized(vec3_lerp(diffuse_direction, reflection, hit.intersected_mesh.material.roughness));
+            Ray specular_ray = {
+                .origin=hit_location,
+                .direction=specular_direction
+            };
+            bounce_lighting = vec3_mult(path_trace(scene, specular_ray, depth - 1), hit.intersected_mesh.material.specular_color);
+        }
+        else {
+            /* Diffuse */
+            // This is the lambertian diffuse model / BRDF
+            Vector3 diffuse_direction = vec3_normalized(vec3_add(random_point_in_sphere(1), hit.normal));
+            Ray diffuse_ray = {
+                .origin=hit_location,
+                .direction=diffuse_direction
+            };
+            bounce_lighting = vec3_mult(path_trace(scene, diffuse_ray, depth - 1), hit.intersected_mesh.material.base_color);
+        }
+        lighting = vec3_add(lighting, bounce_lighting);
     }
-    return vec3_mult(lighting, hit.intersected_mesh.material.base_color);
+    return lighting;
+    // return vec3_mult(lighting, hit.intersected_mesh.material.base_color);
 }
 
 void path_trace_scene(PathTracedScene scene, int y_start, int y_end){

@@ -156,6 +156,26 @@ Vector3 vec3_cross_prod(Vector3 a, Vector3 b);
  */
 double vec3_distance(Vector3 a, Vector3 b);
 
+/**
+ * @brief Linearly interpolates between two 3D vectors
+ * 
+ * @param a The first vector
+ * @param b The second vector
+ * @param t The interpolation factor
+ * @return Vector3 The interpolated vector
+ */
+Vector3 vec3_lerp(Vector3 a, Vector3 b, double t);
+
+/**
+ * @brief Computes the reflection vector given the incoming and normal vector
+ * 
+ * @param incoming The incoming vector
+ * @param normal The normal vector of the reflection plane
+ * @return Vector3 The reflection vector
+ */
+Vector3 vec3_reflection(Vector3 incoming, Vector3 normal);
+
+
 double* vec3_to_array(Vector3* vec);
 
 /**
