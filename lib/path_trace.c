@@ -200,6 +200,10 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth){
             Vector3 diffuse_direction = vec3_normalized(vec3_add(random_point_in_sphere(1), hit.normal));
             ray.direction = diffuse_direction;
         }
+        // Russian Roulette ray termination
+        double ray_strength = fmax(fmax(throughput.r, throughput.g), throughput.b);
+        if(rand_double() > ray_strength) break;
+        throughput = vec3_scale(throughput, 1.0 / ray_strength);
     }
 
     return pixel_color;
@@ -353,7 +357,8 @@ const bool LIVE_DRAW = true;
 
 void path_trace_scene_multithreaded(PathTracedScene scene){
     //* This probably only works on Mac, so maybe threads should just be a CLI arg instead
-    int num_threads = sysconf(_SC_NPROCESSORS_ONLN);
+    // int num_threads = sysconf(_SC_NPROCESSORS_ONLN);
+    int num_threads = 100;
     pthread_t threads[num_threads];
     struct PathTracingThreadInfo thread_args[num_threads];
 
