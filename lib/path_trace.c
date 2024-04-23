@@ -269,10 +269,13 @@ void set_pixel(Color3* screen_buffer, Color3 pixel, int width, int x, int y){
     screen_buffer[(width * y) + x] = pixel;
 }
 
-void draw_screen_buffer(Color3* screen_buffer, int width, int height){
-    for(int y = 0; y < height; y++){
-        for (int x = 0; x < width; x++){
-            Color3 color = get_pixel(screen_buffer, width, x, y);
+//TODO: Apply these color transforms elsewhere? so we can actually save the image easier. Maybe at the end of `path_trace_scene_multithreaded` or `path_trace_scene`
+void draw_screen_buffer(PathTracedScene scene){
+    for(int y = 0; y < scene.height; y++){
+        for (int x = 0; x < scene.width; x++){
+            Color3 color = get_pixel(scene.screen_buffer, scene.width, x, y);
+            if(scene.tonemap != NULL) color = scene.tonemap(color);
+            if(scene.color_transform != NULL) color = scene.color_transform(color);
             G_rgb(SPREAD_COL3(color));
             G_pixel(x, y);
         }
@@ -304,7 +307,7 @@ volatile bool draw_buffer = true;
 void* live_draw_buffer(void* path_tracing_thread_info){
     struct PathTracingThreadInfo info = *(struct PathTracingThreadInfo*)path_tracing_thread_info;
     while(draw_buffer){
-        draw_screen_buffer(info.scene.screen_buffer, info.scene.width, info.scene.height);
+        draw_screen_buffer(info.scene);
         G_display_image();
         //TODO: allow for a delay here
     }
@@ -341,7 +344,7 @@ void path_trace_scene_multithreaded(PathTracedScene scene){
         draw_buffer = true;
     }
     else{
-        draw_screen_buffer(scene.screen_buffer, scene.width, scene.height);
+        draw_screen_buffer(scene);
     }
 }
 

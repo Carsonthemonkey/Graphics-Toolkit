@@ -23,6 +23,9 @@ typedef struct {
     Mesh* meshes;
     int num_lights;
     PointLight* lights; //TODO: make this work nice with different light types
+
+    Color3 (*color_transform)(Color3 color);
+    Color3 (*tonemap)(Color3 color);
 } PathTracedScene;
 
 typedef struct {
@@ -90,11 +93,9 @@ void set_pixel(Color3* screen_buffer, Color3 pixel, int width, int x, int y);
 /**
  * @brief Draws the screen buffer to the screen
  * 
- * @param screen_buffer The screen buffer to draw
- * @param width The width of the screen buffer
- * @param height The height of the screen buffer
+ * @param scene The scene whose screen buffer will be drawn
  */
-void draw_screen_buffer(Color3* screen_buffer, int width, int height);
+void draw_screen_buffer(PathTracedScene scene);
 
 
 /**

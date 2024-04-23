@@ -16,6 +16,30 @@ typedef Vector3 Color3;
 
 #define SPREAD_COL3(c) (c).r, (c).g, (c).b
 
+/**
+ * @brief Transforms a linear color to the sRGB color space
+ * 
+ * @param linear_color The linear color to transform
+ * @return Color3 The color transformed to sRGB
+ */
+Color3 linear_to_srgb(Color3 linear_color);
+
+/**
+ * @brief Transforms a color in the sRGB color space to linear
+ * 
+ * @param srgb_color The sRGB color
+ * @return Color3 The color transformed to linear
+ */
+Color3 srgb_to_linear(Color3 srgb_color);
+
+/**
+ * @brief Applies tonemapping based on The Academy Color Encoding System (ACES)
+ * 
+ * @param color The color to tonemap
+ * @return Color3 The tonemapped color
+ */
+Color3 aces_tonemap(Color3 color);
+
 #ifndef COLORS_H
 #define COLORS_H
 
