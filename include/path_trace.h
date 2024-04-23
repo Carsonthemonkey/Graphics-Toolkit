@@ -67,23 +67,11 @@ bool intersect_triangle(double* t_out, Vector2* barycentric_out, double closest_
 void path_trace_scene(PathTracedScene scene, int y_start, int y_end);
 
 /**
- * @brief Set a pixel on the screen buffer to a given color
- * 
- * @param light_buffer The screen buffer to set the pixel on
- * @param pixel The color of the pixel
- * @param width The width of the screen
- * @param x The x coordinate of the pixel
- * @param y The y coordinate of the pixel
- */
-void set_pixel(Color3* light_buffer, Color3 pixel, int width, int x, int y);
-
-/**
  * @brief Draws the screen buffer to the screen
  * 
  * @param scene The scene whose screen buffer will be drawn
  */
 void draw_screen_buffer(PathTracedScene scene);
-
 
 /**
  * @brief Clears the screen buffer to a given color

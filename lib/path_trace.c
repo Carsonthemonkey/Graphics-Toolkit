@@ -219,7 +219,7 @@ void add_sample(Color3* buffer, Color3 pixel, int width, int x, int y, int sampl
     Color3 prev = get_image_buffer_pixel(buffer, x, y, width);
     double contribution = 1.0 / sample_num;
     Color3 new_color = vec3_add(vec3_scale(prev, 1.0 - contribution), vec3_scale(pixel, contribution));
-    set_pixel(buffer, new_color, width, x, y);
+    set_image_buffer_pixel(buffer, new_color, x, y, width);
 }
 
 void path_trace_scene(PathTracedScene scene, int y_start, int y_end){
@@ -257,10 +257,6 @@ void path_trace_scene(PathTracedScene scene, int y_start, int y_end){
             }
         }
     }
-}
-
-void set_pixel(Color3* light_buffer, Color3 pixel, int width, int x, int y){
-    light_buffer[(width * y) + x] = pixel;
 }
 
 //TODO: Apply these color transforms elsewhere? so we can actually save the image easier. Maybe at the end of `path_trace_scene_multithreaded` or `path_trace_scene`
@@ -313,7 +309,7 @@ void draw_screen_buffer(PathTracedScene scene){
 void clear_screen_buffer(Color3* light_buffer, Color3 color, int width, int height){
     for (int y = 0; y < height; y++){
         for (int x = 0; x < width; x++){
-            set_pixel(light_buffer, color, width, x, y);
+            set_image_buffer_pixel(light_buffer, color, x, y, width);
         }
     }
 }
