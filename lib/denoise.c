@@ -6,6 +6,7 @@
 #include <OpenImageDenoise/config.h>
 #include "path_trace.h"
 #include "colors.h"
+#include "buffer.h"
 
 bool initialized = false;
 OIDNDevice device;
@@ -41,7 +42,7 @@ void fill_denoise_buffer(Color3* image_buffer, Color3f* denoise_buffer, int widt
     for(int p = 0; p < num_pixels; p++){
         int y = p / width;
         int x = p - (y * width);
-        Color3 image_pixel = get_pixel(image_buffer, width, x, y);
+        Color3 image_pixel = get_image_buffer_pixel(image_buffer, x, y, width);
         denoise_buffer[p] = vec3_to_vec3f(image_pixel);
         // denoise_buffer[p * 3] = (float)image_pixel.r;
         // denoise_buffer[(p * 3) + 1] = (float)image_pixel.g;

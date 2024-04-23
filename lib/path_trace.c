@@ -215,7 +215,7 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth){
 }
 
 void add_sample(Color3* buffer, Color3 pixel, int width, int x, int y, int sample_num){
-    Color3 prev = get_pixel(buffer, width, x, y);
+    Color3 prev = get_image_buffer_pixel(buffer, x, y, width);
     double contribution = 1.0 / sample_num;
     Color3 new_color = vec3_add(vec3_scale(prev, 1.0 - contribution), vec3_scale(pixel, contribution));
     set_pixel(buffer, new_color, width, x, y);
@@ -256,19 +256,6 @@ void path_trace_scene(PathTracedScene scene, int y_start, int y_end){
             }
         }
     }
-}
-
-Color3* create_screen_buffer(int width, int height){
-    Color3* buffer = (Color3*)malloc(sizeof(Color3) * width * height);
-    if(buffer == NULL){
-        fprintf(stderr, "Failed to allocate memory for screen buffer\n");
-        exit(1);
-    }
-    return buffer;
-}
-
-Color3 get_pixel(Color3* light_buffer, int width, int x, int y){
-    return light_buffer[(width * y) + x];
 }
 
 void set_pixel(Color3* light_buffer, Color3 pixel, int width, int x, int y){
