@@ -49,7 +49,7 @@ void fill_denoise_buffer(Color3* image_buffer, float* denoise_buffer, int width,
 }
 
 void denoise_image(PathTracedScene scene){
-    fill_denoise_buffer(scene.screen_buffer, scene.denoise_buffer, scene.width, scene.height);
+    fill_denoise_buffer(scene.light_buffer, scene.denoise_buffer, scene.width, scene.height);
     oidnExecuteFilter(filter);
 
     const char* errorMessage;

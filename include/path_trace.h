@@ -16,7 +16,7 @@ typedef struct {
 typedef struct {
     // image buffers
     int width, height;
-    Color3* screen_buffer;
+    Color3* light_buffer;
     float* denoise_buffer;
 
     // Camera
@@ -78,7 +78,7 @@ Color3* create_screen_buffer(int width, int height);
 /**
  * @brief Get the color of a given pixel in the screen buffer
  * 
- * @param screen_buffer The screen buffer to sample
+ * @param light_buffer The screen buffer to sample
  * @param width The width of the screen
  * @param x The x coordinate of the pixel
  * @param y The y coordinate of the pixel
@@ -89,13 +89,13 @@ Color3 get_pixel(Color3* screen_buffer, int width, int x, int y);
 /**
  * @brief Set a pixel on the screen buffer to a given color
  * 
- * @param screen_buffer The screen buffer to set the pixel on
+ * @param light_buffer The screen buffer to set the pixel on
  * @param pixel The color of the pixel
  * @param width The width of the screen
  * @param x The x coordinate of the pixel
  * @param y The y coordinate of the pixel
  */
-void set_pixel(Color3* screen_buffer, Color3 pixel, int width, int x, int y);
+void set_pixel(Color3* light_buffer, Color3 pixel, int width, int x, int y);
 
 /**
  * @brief Draws the screen buffer to the screen
@@ -108,12 +108,12 @@ void draw_screen_buffer(PathTracedScene scene);
 /**
  * @brief Clears the screen buffer to a given color
  * 
- * @param screen_buffer The buffer to clear
+ * @param light_buffer The buffer to clear
  * @param color The color to set it to
  * @param width The width of the buffer
  * @param height The height of the buffer
  */
-void clear_screen_buffer(Color3* screen_buffer, Color3 color, int width, int height);
+void clear_screen_buffer(Color3* light_buffer, Color3 color, int width, int height);
 
 /**
  * @brief Draws an entire path traced scene using multiple threads

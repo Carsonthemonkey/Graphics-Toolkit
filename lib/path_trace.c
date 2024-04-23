@@ -252,7 +252,7 @@ void path_trace_scene(PathTracedScene scene, int y_start, int y_end){
                     .direction=vec3_normalized(vec3_sub(focal_point, jittered_ray.origin))
                 };
                 pixel_color = vec3_add(pixel_color, path_trace(scene, jittered_ray, MAX_DIFFUSE_BOUNCES));
-                add_sample(scene.screen_buffer, pixel_color, scene.width, x, y, sample + 1);
+                add_sample(scene.light_buffer, pixel_color, scene.width, x, y, sample + 1);
             }
         }
     }
@@ -267,12 +267,12 @@ Color3* create_screen_buffer(int width, int height){
     return buffer;
 }
 
-Color3 get_pixel(Color3* screen_buffer, int width, int x, int y){
-    return screen_buffer[(width * y) + x];
+Color3 get_pixel(Color3* light_buffer, int width, int x, int y){
+    return light_buffer[(width * y) + x];
 }
 
-void set_pixel(Color3* screen_buffer, Color3 pixel, int width, int x, int y){
-    screen_buffer[(width * y) + x] = pixel;
+void set_pixel(Color3* light_buffer, Color3 pixel, int width, int x, int y){
+    light_buffer[(width * y) + x] = pixel;
 }
 
 //TODO: Apply these color transforms elsewhere? so we can actually save the image easier. Maybe at the end of `path_trace_scene_multithreaded` or `path_trace_scene`
@@ -322,10 +322,10 @@ void draw_screen_buffer(PathTracedScene scene){
     // }
 }
 
-void clear_screen_buffer(Color3* screen_buffer, Color3 color, int width, int height){
+void clear_screen_buffer(Color3* light_buffer, Color3 color, int width, int height){
     for (int y = 0; y < height; y++){
         for (int x = 0; x < width; x++){
-            set_pixel(screen_buffer, color, width, x, y);
+            set_pixel(light_buffer, color, width, x, y);
         }
     }
 }
