@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <pthread.h>
 #include <time.h>
+#include <OpenImageDenoise/oidn.h>
 #include "path_trace.h"
 #include "FPToolkit.h"
 #include "trig.h"
@@ -16,8 +17,8 @@
 #include "mesh.h"
 #include "random.h"
 const double EPSILON = 0.000001;
-const int NUM_SHADOW_RAYS = 4;
-const int NUM_CAMERA_RAYS = 256;
+const int NUM_SHADOW_RAYS = 1;
+const int NUM_CAMERA_RAYS = 512;
 const int MAX_DIFFUSE_BOUNCES = 4;
 
 const int DRAW_DELAY_SECONDS = 5;
@@ -274,15 +275,68 @@ void set_pixel(Color3* screen_buffer, Color3 pixel, int width, int x, int y){
 
 //TODO: Apply these color transforms elsewhere? so we can actually save the image easier. Maybe at the end of `path_trace_scene_multithreaded` or `path_trace_scene`
 void draw_screen_buffer(PathTracedScene scene){
-    for(int y = 0; y < scene.height; y++){
-        for (int x = 0; x < scene.width; x++){
-            Color3 color = vec3_scale(get_pixel(scene.screen_buffer, scene.width, x, y), scene.exposure);
-            if(scene.tonemap != NULL) color = scene.tonemap(color);
-            if(scene.color_transform != NULL) color = scene.color_transform(color);
-            G_rgb(SPREAD_COL3(color));
-            G_pixel(x, y);
-        }
+    //! I am making this function ugly an inefficient to more quickly implement denoising. Clean this process up before merging with path_tracing branch
+    //! OpenImageDenoise should not be run every draw like this
+    //? Does OpenImageDenoise only work on floats? let's convert image to floats for now just to be safe
+
+    OIDNDevice device = oidnNewDevice(OIDN_DEVICE_TYPE_DEFAULT);
+    oidnCommitDevice(device);
+    int num_pixels = scene.width * scene.height;
+    OIDNBuffer color_buff = oidnNewBuffer(device, num_pixels * sizeof(float) * 3);
+    OIDNFilter filter = oidnNewFilter(device, "RT");
+    oidnSetFilterImage(filter, "color", color_buff, OIDN_FORMAT_FLOAT3, scene.width, scene.height, 0, 0, 0);
+    oidnSetFilterImage(filter, "output", color_buff, OIDN_FORMAT_FLOAT3, scene.width, scene.height, 0, 0, 0);
+    oidnSetFilterBool(filter, "hdr", true);
+    oidnCommitFilter(filter);
+    float* denoise_buffer = (float*)oidnGetBufferData(color_buff);
+    // float* temp_buffer = malloc(num_pixels * sizeof(float) * 3); // This should allocate enough space for float image buffer
+    for(int p = 0; p < num_pixels; p++){
+        int y = p / scene.width;
+        int x = p - (y * scene.width);
+        Color3 image_pixel = get_pixel(scene.screen_buffer, scene.width, x, y);
+        // G_rgb(SPREAD_COL3(image_pixel));
+        // G_pixel(x, y);
+        denoise_buffer[p * 3]       = (float)image_pixel.x;
+        denoise_buffer[(p * 3) + 1] = (float)image_pixel.y;
+        denoise_buffer[(p * 3) + 2] = (float)image_pixel.z;
+        // printf("%f vs %lf\n", (float)image_pixel.x, image_pixel.x);
     }
+    printf("copied floats to buffer\n");
+    
+    oidnExecuteFilter(filter);
+    const char* errorMessage;
+    if (oidnGetDeviceError(device, &errorMessage) != OIDN_ERROR_NONE)
+    printf("Error: %s\n", errorMessage);
+
+    for(int p = 0; p < num_pixels; p++){
+        int y = p / scene.width;
+        int x = p - (y * scene.width);
+        
+        float r = denoise_buffer[p * 3];
+        float g = denoise_buffer[(p * 3) + 1];
+        float b = denoise_buffer[(p * 3) + 2];
+
+        Color3 draw_color = (Color3){(double)r, (double)g, (double)b};
+        draw_color = vec3_scale(draw_color, scene.exposure);
+        if(scene.tonemap != NULL) draw_color = scene.tonemap(draw_color);
+        if(scene.color_transform != NULL) draw_color = scene.color_transform(draw_color);
+        G_rgb(SPREAD_COL3(draw_color));
+        G_pixel(x, y);
+    }
+    oidnReleaseBuffer(color_buff);
+    oidnReleaseFilter(filter);
+    oidnReleaseDevice(device);
+    
+    
+    // for(int y = 0; y < scene.height; y++){
+    //     for (int x = 0; x < scene.width; x++){
+    //         Color3 color = vec3_scale(get_pixel(scene.screen_buffer, scene.width, x, y), scene.exposure);
+    //         // if(scene.tonemap != NULL) color = scene.tonemap(color);
+    //         // if(scene.color_transform != NULL) color = scene.color_transform(color);
+    //         // G_rgb(SPREAD_COL3(color));
+    //         // G_pixel(x, y);
+    //     }
+    // }
 }
 
 void clear_screen_buffer(Color3* screen_buffer, Color3 color, int width, int height){
