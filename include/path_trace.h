@@ -16,6 +16,7 @@ typedef struct {
 typedef struct {
     int width, height;
     Color3* screen_buffer;
+    float* denoise_buffer;
 
     Camera* main_camera;
 
