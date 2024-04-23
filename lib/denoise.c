@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdbool.h> 
 #include <OpenImageDenoise/oidn.h>
+#include <OpenImageDenoise/config.h>
 #include "path_trace.h"
 #include "colors.h"
 
@@ -17,8 +18,24 @@ void init_denoiser(PathTracedScene* scene){
         return;
     }
     initialized = true;
-    device = oidnNewDevice(OIDN_DEVICE_TYPE_CPU);
+    // int dnum = oidnGetNumPhysicalDevices();
+    // // printf("device num: %i\n", dnum);
+    // for(int d = 0; d < dnum; d++){
+    //     char* target = "type";
+    //     const char* device_name;
+    //     int dtype = oidnGetPhysicalDeviceInt(d, target);
+    //     printf("dtype: %i\n", dtype);
+    //     // printf("%i\n", );
+    //     // printf("%i\n", dtype);
+    //     // printf("%s\n", device_name);
+    // }
+    device = oidnNewDevice(OIDN_DEVICE_TYPE_METAL);
+    const char* errorMessage;
+    if (oidnGetDeviceError(device, &errorMessage) != OIDN_ERROR_NONE)
+    fprintf(stderr, "OpenImageDenoise Error: %s\n", errorMessage);
+
     oidnCommitDevice(device);
+    printf("device initialized\n");
     int num_pixels = scene->width * scene->height;
     color_buffer = oidnNewBuffer(device, num_pixels * sizeof(float) * 3);
     scene->denoise_buffer = (float*)oidnGetBufferData(color_buffer);

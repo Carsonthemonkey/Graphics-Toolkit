@@ -1,4 +1,5 @@
 out
+vendor
 .DS_STORE
 .idea
 .vscode

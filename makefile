@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-I./include -g -I/opt/X11/include -I/opt/homebrew/Cellar/open-image-denoise/2.2.2/include -Ofast
+CFLAGS=-I./include -g -I/opt/X11/include -I./vendor/OpenImageDenoise/include -Ofast
 SRC_DIR=lib
 OBJ_DIR=out
 INCLUDE_DIR=include
