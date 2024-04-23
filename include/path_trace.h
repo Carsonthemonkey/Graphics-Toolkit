@@ -14,17 +14,22 @@ typedef struct {
 } PointLight;
 
 typedef struct {
+    // image buffers
     int width, height;
     Color3* screen_buffer;
     float* denoise_buffer;
 
+    // Camera
     Camera* main_camera;
 
+    // Scene objects
     int num_meshes;
     Mesh* meshes;
     int num_lights;
     PointLight* lights; //TODO: make this work nice with different light types
 
+    // Post processing
+    bool denoise;
     double exposure;
     Color3 (*color_transform)(Color3 color);
     Color3 (*tonemap)(Color3 color);
