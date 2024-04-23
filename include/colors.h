@@ -14,6 +14,12 @@
  */
 typedef Vector3 Color3;
 
+/**
+ * @brief An alias for Vector3f. Behaves the exact same but is more semantically meaningful
+ * 
+ */
+typedef Vector3f Color3f;
+
 #define SPREAD_COL3(c) (c).r, (c).g, (c).b
 
 /**

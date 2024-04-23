@@ -124,6 +124,22 @@ Vector3 vec3_reflection(Vector3 incoming, Vector3 normal){
     return result;
 }
 
+Vector3f vec3_to_vec3f(Vector3 v){
+    return (Vector3f){
+        .x=(float)v.x,
+        .y=(float)v.y,
+        .z=(float)v.z,
+    };
+}
+
+Vector3 vec3f_to_vec3(Vector3f v){
+    return (Vector3){
+        .x=(double)v.x,
+        .y=(double)v.y,
+        .z=(double)v.z,
+    };
+}
+
 double* vec3_to_array(Vector3* vec){
     //exists so that it's behaviour can be updated later
     return (double*)vec;
