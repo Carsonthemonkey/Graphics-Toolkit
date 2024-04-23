@@ -17,6 +17,7 @@
 #include "mesh.h"
 #include "random.h"
 #include "denoise.h"
+#include "buffer.h"
 
 const double EPSILON = 0.000001;
 const int NUM_SHADOW_RAYS = 1;
