@@ -27,7 +27,7 @@ void init_denoiser(PathTracedScene* scene){
     //TODO: print info about chosen denoising device
     int num_pixels = scene->width * scene->height;
     color_buffer = oidnNewBuffer(device, num_pixels * sizeof(float) * 3);
-    scene->denoise_buffer = (float*)oidnGetBufferData(color_buffer);
+    scene->denoise_buffer = (Color3f*)oidnGetBufferData(color_buffer);
     filter = oidnNewFilter(device, "RT");
     oidnSetFilterImage(filter, "color", color_buffer, OIDN_FORMAT_FLOAT3, scene->width, scene->height, 0, 0, 0);
     //TODO: Maybe use another buffer for denoise output?
@@ -36,15 +36,16 @@ void init_denoiser(PathTracedScene* scene){
     oidnCommitFilter(filter);
 }
 
-void fill_denoise_buffer(Color3* image_buffer, float* denoise_buffer, int width, int height){
+void fill_denoise_buffer(Color3* image_buffer, Color3f* denoise_buffer, int width, int height){
     int num_pixels = width * height;
     for(int p = 0; p < num_pixels; p++){
         int y = p / width;
         int x = p - (y * width);
         Color3 image_pixel = get_pixel(image_buffer, width, x, y);
-        denoise_buffer[p * 3] = (float)image_pixel.r;
-        denoise_buffer[(p * 3) + 1] = (float)image_pixel.g;
-        denoise_buffer[(p * 3) + 2] = (float)image_pixel.b;
+        denoise_buffer[p] = vec3_to_vec3f(image_pixel);
+        // denoise_buffer[p * 3] = (float)image_pixel.r;
+        // denoise_buffer[(p * 3) + 1] = (float)image_pixel.g;
+        // denoise_buffer[(p * 3) + 2] = (float)image_pixel.b;
     }
 }
 

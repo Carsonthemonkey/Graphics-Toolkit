@@ -288,7 +288,6 @@ void draw_screen_buffer(PathTracedScene scene){
     
     denoise_image(scene);    
 
-    // float* temp_buffer = malloc(num_pixels * sizeof(float) * 3); // This should allocate enough space for float image buffer
     clock_gettime(CLOCK_MONOTONIC, &end);
     denoise_time = end.tv_sec - start.tv_sec;
     denoise_time += (end.tv_nsec - start.tv_nsec) / 1000000000.0;
@@ -298,14 +297,15 @@ void draw_screen_buffer(PathTracedScene scene){
         int y = p / scene.width;
         int x = p - (y * scene.width);
         
-        float r = scene.denoise_buffer[p * 3];
-        float g = scene.denoise_buffer[(p * 3) + 1];
-        float b = scene.denoise_buffer[(p * 3) + 2];
+        Color3f draw_color = scene.denoise_buffer[p];
+        // float r = scene.denoise_buffer[p * 3];
+        // float g = scene.denoise_buffer[(p * 3) + 1];
+        // float b = scene.denoise_buffer[(p * 3) + 2];
 
-        Color3 draw_color = (Color3){(double)r, (double)g, (double)b};
-        draw_color = vec3_scale(draw_color, scene.exposure);
-        if(scene.tonemap != NULL) draw_color = scene.tonemap(draw_color);
-        if(scene.color_transform != NULL) draw_color = scene.color_transform(draw_color);
+        // Color3 draw_color = (Color3){(double)r, (double)g, (double)b};
+        // draw_color = vec3_scale(draw_color, scene.exposure);
+        // if(scene.tonemap != NULL) draw_color = scene.tonemap(draw_color);
+        // if(scene.color_transform != NULL) draw_color = scene.color_transform(draw_color);
         G_rgb(SPREAD_COL3(draw_color));
         G_pixel(x, y);
     }

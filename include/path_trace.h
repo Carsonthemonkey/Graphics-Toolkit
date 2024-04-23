@@ -17,7 +17,7 @@ typedef struct {
     // image buffers
     int width, height;
     Color3* light_buffer;
-    float* denoise_buffer;
+    Color3f* denoise_buffer;
 
     // Camera
     Camera* main_camera;
