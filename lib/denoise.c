@@ -18,7 +18,7 @@ void init_denoiser(PathTracedScene* scene){
         return;
     }
     initialized = true;
-    device = oidnNewDevice(OIDN_DEVICE_TYPE_METAL);
+    device = oidnNewDevice(OIDN_DEVICE_TYPE_DEFAULT);
     const char* errorMessage;
     if (oidnGetDeviceError(device, &errorMessage) != OIDN_ERROR_NONE)
     fprintf(stderr, "OpenImageDenoise Error: %s\n", errorMessage);
