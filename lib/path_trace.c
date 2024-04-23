@@ -178,7 +178,6 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth){
         pixel_color = vec3_add(pixel_color, vec3_mult(throughput, vec3_scale(mesh.material.emissive, mesh.material.emission_strength)));
 
         /* Direct Lighting */
-        // throughput = vec3_mult(throughput, direct_lighting(scene, hit_location, hit.normal));
         pixel_color = vec3_add(pixel_color, vec3_mult(vec3_mult(direct_lighting(scene, hit_location, hit.normal), mesh.material.base_color), throughput));
         
         /* Indirect Lighting */
@@ -207,53 +206,6 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth){
     }
 
     return pixel_color;
-
-    // /*
-    // //------ Old ------
-    // RayHitInfo hit;
-    // bool did_hit = raycast(&hit, scene, ray);
-
-    // /* Environment lighting goes here basically */
-    // // if(!did_hit) return ray.direction;
-    // if(!did_hit) return (Color3){0, 0, 0}; 
-
-    // Vector3 hit_location = vec3_add(ray.origin, vec3_scale(ray.direction, hit.distance));
-
-    // /* Emissive materials */
-    // Color3 lighting = vec3_scale(hit.intersected_mesh.material.emissive, hit.intersected_mesh.material.emission_strength);
-    // /* Direct Lighting */
-    // lighting = vec3_add(lighting, direct_lighting(scene, hit_location, hit.normal));
-    // if(depth > 0){
-    //     /* Indirect Lighting */
-    //     Color3 bounce_lighting;
-    //     if(rand_double() < hit.intersected_mesh.material.specular){
-    //         /* Specular */
-    //         Vector3 diffuse_direction;
-    //         //Optimize for perfectly reflective surfaces
-    //         if(hit.intersected_mesh.material.roughness > 0) diffuse_direction = vec3_normalized(vec3_add(random_point_in_sphere(1), hit.normal)); 
-    //         Vector3 reflection = vec3_reflection(ray.direction, hit.normal);
-    //         //TODO: Apparently interpolating the normal instead of the ray direction is better
-    //         Vector3 specular_direction = vec3_normalized(vec3_lerp(diffuse_direction, reflection, hit.intersected_mesh.material.roughness));
-    //         Ray specular_ray = {
-    //             .origin=hit_location,
-    //             .direction=specular_direction
-    //         };
-    //         bounce_lighting = vec3_mult(path_trace(scene, specular_ray, depth - 1), hit.intersected_mesh.material.specular_color);
-    //     }
-    //     else {
-    //         /* Diffuse */
-    //         // This is the lambertian diffuse model / BRDF
-    //         Vector3 diffuse_direction = vec3_normalized(vec3_add(random_point_in_sphere(1), hit.normal));
-    //         Ray diffuse_ray = {
-    //             .origin=hit_location,
-    //             .direction=diffuse_direction
-    //         };
-    //         bounce_lighting = vec3_mult(path_trace(scene, diffuse_ray, depth - 1), hit.intersected_mesh.material.base_color);
-    //     }
-    //     lighting = vec3_add(lighting, bounce_lighting);
-    // }
-    // return lighting;
-    // // return vec3_mult(lighting, hit.intersected_mesh.material.base_color);
 }
 
 void path_trace_scene(PathTracedScene scene, int y_start, int y_end){
@@ -356,7 +308,6 @@ void* live_draw_buffer(void* path_tracing_thread_info){
 const bool LIVE_DRAW = true;
 
 void path_trace_scene_multithreaded(PathTracedScene scene){
-    //* This probably only works on Mac, so maybe threads should just be a CLI arg instead
     int num_threads = scene.height / 4;
     pthread_t threads[num_threads];
     struct PathTracingThreadInfo thread_args[num_threads];
