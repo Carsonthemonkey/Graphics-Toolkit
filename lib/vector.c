@@ -108,6 +108,22 @@ double vec3_distance(Vector3 a, Vector3 b){
     return vec3_magnitude(vec3_sub(b, a));
 }
 
+Vector3 vec3_lerp(Vector3 a, Vector3 b, double t){
+    Vector3 result;
+    result.x = a.x + (b.x - a.x) * t;
+    result.y = a.y + (b.y - a.y) * t;
+    result.z = a.z + (b.z - a.z) * t;
+    return result;
+}
+
+Vector3 vec3_reflection(Vector3 incoming, Vector3 normal){
+    Vector3 result;
+    double dot_prod = vec3_dot_prod(incoming, normal);
+    Vector3 scaled_normal = vec3_scale(normal, 2 * dot_prod);
+    result = vec3_sub(incoming, scaled_normal);
+    return result;
+}
+
 double* vec3_to_array(Vector3* vec){
     //exists so that it's behaviour can be updated later
     return (double*)vec;

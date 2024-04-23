@@ -16,7 +16,8 @@
 #include "random.h"
 const double EPSILON = 0.000001;
 const int NUM_SHADOW_RAYS = 16;
-const int NUM_CAMERA_RAYS = 16;
+const int NUM_CAMERA_RAYS = 256;
+const int MAX_DIFFUSE_BOUNCES = 8;
 
 bool intersect_triangle(double* t_out, Vector2* barycentric_out, double closest_t, Ray ray, Triangle triangle){
     //TODO: precompute triangle normal
@@ -133,7 +134,7 @@ Vector3 ray_hit_location(Ray ray, double distance){
 }
 
 //TODO: add different kinds of light support here 
-Color3 shadow_ray(PathTracedScene scene, Vector3 position, Vector3 surface_normal){
+Color3 direct_lighting(PathTracedScene scene, Vector3 position, Vector3 surface_normal){
     // This is not a clamped color
     Color3 direct_light = {0, 0, 0};
     Ray shadow = {.origin=position};
@@ -158,19 +159,53 @@ Color3 shadow_ray(PathTracedScene scene, Vector3 position, Vector3 surface_norma
     return direct_light;
 }
 
-Color3 path_trace(PathTracedScene scene, Ray ray){
-    RayHitInfo hit;
-    bool did_hit = raycast(&hit, scene, ray);
 
-    /* Environment lighting goes here basically */
-    if(!did_hit) return ray.direction;
+Color3 path_trace(PathTracedScene scene, Ray ray, int depth){
+    Color3 pixel_color = {0, 0, 0};
+    Color3 throughput = {1, 1, 1};
+    for(int r = 0; r < depth; r++){
+        RayHitInfo hit;
+        bool did_hit = raycast(&hit, scene, ray);
+        if(!did_hit){
+            // Environment lighting goes here
+            pixel_color = vec3_add(pixel_color, (Color3){BLACK});
+            break;
+        }
+        Mesh mesh = hit.intersected_mesh;
+        Vector3 hit_location =  vec3_add(ray.origin, vec3_scale(ray.direction, hit.distance));
 
-    Color3 result = hit.intersected_mesh.material.base_color;
-    Vector3 hit_location = vec3_add(ray.origin, vec3_scale(ray.direction, hit.distance));
+        /* Emissive Materials */
+        pixel_color = vec3_add(pixel_color, vec3_mult(throughput, vec3_scale(mesh.material.emissive, mesh.material.emission_strength)));
 
-    // I think phong smooth shading would happen here
-    Color3 direct_lighting = shadow_ray(scene, hit_location, hit.normal);
-    return vec3_mult(direct_lighting, result);
+        /* Direct Lighting */
+        pixel_color = vec3_add(pixel_color, vec3_mult(vec3_mult(direct_lighting(scene, hit_location, hit.normal), mesh.material.base_color), throughput));
+        
+        /* Indirect Lighting */
+        ray.origin = hit_location;
+        if(rand_double() < mesh.material.specular){
+            /* Specular Reflection */
+            throughput = vec3_mult(throughput, mesh.material.specular_color);
+            Vector3 diffuse_direction;
+            if(mesh.material.roughness > 0) diffuse_direction = vec3_normalized(vec3_add(random_point_in_sphere(1), hit.normal));
+            //TODO: Apparently interpolating the normal instead of the ray direction is better
+            Vector3 reflection = vec3_reflection(ray.direction, hit.normal);
+            Vector3 specular_direction = vec3_normalized(vec3_lerp(reflection, diffuse_direction, mesh.material.roughness));
+            ray.direction = specular_direction;
+        }
+        else{
+            /* Diffuse */
+            throughput = vec3_mult(throughput, mesh.material.base_color);
+            // This is the lambertian diffuse model / BRDF
+            Vector3 diffuse_direction = vec3_normalized(vec3_add(random_point_in_sphere(1), hit.normal));
+            ray.direction = diffuse_direction;
+        }
+        // Russian Roulette ray termination
+        double ray_strength = fmax(fmax(throughput.r, throughput.g), throughput.b);
+        if(rand_double() > ray_strength) break;
+        throughput = vec3_scale(throughput, 1.0 / ray_strength);
+    }
+
+    return pixel_color;
 }
 
 void path_trace_scene(PathTracedScene scene, int y_start, int y_end){
@@ -203,7 +238,7 @@ void path_trace_scene(PathTracedScene scene, int y_start, int y_end){
                     ),
                     .direction=vec3_normalized(vec3_sub(focal_point, jittered_ray.origin))
                 };
-                pixel_color = vec3_add(pixel_color, path_trace(scene, jittered_ray));
+                pixel_color = vec3_add(pixel_color, path_trace(scene, jittered_ray, MAX_DIFFUSE_BOUNCES));
             }
             pixel_color = vec3_scale(pixel_color, 1.0 / NUM_CAMERA_RAYS);
             set_pixel(scene.screen_buffer, pixel_color, scene.width, x, y);
@@ -273,8 +308,7 @@ void* live_draw_buffer(void* path_tracing_thread_info){
 const bool LIVE_DRAW = true;
 
 void path_trace_scene_multithreaded(PathTracedScene scene){
-    //* This probably only works on Mac, so maybe threads should just be a CLI arg instead
-    int num_threads = sysconf(_SC_NPROCESSORS_ONLN);
+    int num_threads = scene.height / 4;
     pthread_t threads[num_threads];
     struct PathTracingThreadInfo thread_args[num_threads];
 
