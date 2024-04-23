@@ -208,27 +208,34 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth){
     return pixel_color;
 }
 
+void add_sample(Color3* buffer, Color3 pixel, int width, int x, int y, int sample_num){
+    Color3 prev = get_pixel(buffer, width, x, y);
+    double contribution = 1.0 / sample_num;
+    Color3 new_color = vec3_add(vec3_scale(prev, 1.0 - contribution), vec3_scale(pixel, contribution));
+    set_pixel(buffer, new_color, width, x, y);
+}
+
 void path_trace_scene(PathTracedScene scene, int y_start, int y_end){
     double dwidth = (double)scene.width;
     double dheight = (double)scene.height;
     //TODO: obligatory "make this work for non square aspect ratios"
     double film_extent = tan(to_radians(scene.main_camera->half_fov_degrees));
+    for(int sample = 0; sample < NUM_CAMERA_RAYS; sample++){
+        for(int y = y_start; y < y_end; y++){
+            for(int x = 0; x < scene.width; x++){
+                Vector3 pixel_camera_space = {
+                    ((x - (dwidth / 2)) / dwidth) * (film_extent * 2),
+                    ((y - (dheight / 2)) / dheight) * (film_extent * 2),
+                    1
+                };
+                Vector3 world_space_dir = vec3_normalized(vec3_sub(mat4_mult_point(pixel_camera_space, scene.main_camera->inverse_view_matrix), scene.main_camera->eye));
+                Ray ray = {
+                    .origin=scene.main_camera->eye,
+                    .direction=world_space_dir
+                };
+                Color3 pixel_color = {0, 0, 0};
+                Vector3 focal_point = vec3_add(scene.main_camera->eye, vec3_scale(world_space_dir, scene.main_camera->focal_length));
 
-    for(int y = y_start; y < y_end; y++){
-        for(int x = 0; x < scene.width; x++){
-            Vector3 pixel_camera_space = {
-                ((x - (dwidth / 2)) / dwidth) * (film_extent * 2),
-                ((y - (dheight / 2)) / dheight) * (film_extent * 2),
-                1
-            };
-            Vector3 world_space_dir = vec3_normalized(vec3_sub(mat4_mult_point(pixel_camera_space, scene.main_camera->inverse_view_matrix), scene.main_camera->eye));
-            Ray ray = {
-                .origin=scene.main_camera->eye,
-                .direction=world_space_dir
-            };
-            Color3 pixel_color = {0, 0, 0};
-            Vector3 focal_point = vec3_add(scene.main_camera->eye, vec3_scale(world_space_dir, scene.main_camera->focal_length));
-            for(int r = 0; r < NUM_CAMERA_RAYS; r++){
                 /* Depth of Field and Anti-Aliasing */
                 Vector2 jitter = random_point_in_circle(scene.main_camera->depth_of_field);
                 Ray jittered_ray = {
@@ -239,9 +246,8 @@ void path_trace_scene(PathTracedScene scene, int y_start, int y_end){
                     .direction=vec3_normalized(vec3_sub(focal_point, jittered_ray.origin))
                 };
                 pixel_color = vec3_add(pixel_color, path_trace(scene, jittered_ray, MAX_DIFFUSE_BOUNCES));
+                add_sample(scene.screen_buffer, pixel_color, scene.width, x, y, sample + 1);
             }
-            pixel_color = vec3_scale(pixel_color, 1.0 / NUM_CAMERA_RAYS);
-            set_pixel(scene.screen_buffer, pixel_color, scene.width, x, y);
         }
     }
 }
@@ -308,7 +314,7 @@ void* live_draw_buffer(void* path_tracing_thread_info){
 const bool LIVE_DRAW = true;
 
 void path_trace_scene_multithreaded(PathTracedScene scene){
-    int num_threads = scene.height / 4;
+    int num_threads = scene.height;
     pthread_t threads[num_threads];
     struct PathTracingThreadInfo thread_args[num_threads];
 
