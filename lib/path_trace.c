@@ -357,8 +357,7 @@ const bool LIVE_DRAW = true;
 
 void path_trace_scene_multithreaded(PathTracedScene scene){
     //* This probably only works on Mac, so maybe threads should just be a CLI arg instead
-    // int num_threads = sysconf(_SC_NPROCESSORS_ONLN);
-    int num_threads = 100;
+    int num_threads = scene.height / 4;
     pthread_t threads[num_threads];
     struct PathTracingThreadInfo thread_args[num_threads];
 
