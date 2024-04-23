@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <pthread.h>
+#include <time.h>
 #include "path_trace.h"
 #include "FPToolkit.h"
 #include "trig.h"
@@ -18,6 +19,8 @@ const double EPSILON = 0.000001;
 const int NUM_SHADOW_RAYS = 4;
 const int NUM_CAMERA_RAYS = 256;
 const int MAX_DIFFUSE_BOUNCES = 4;
+
+const int DRAW_DELAY_SECONDS = 5;
 
 bool intersect_triangle(double* t_out, Vector2* barycentric_out, double closest_t, Ray ray, Triangle triangle){
     //TODO: precompute triangle normal
@@ -305,11 +308,14 @@ void* run_render_thread(void* path_tracing_thread_info){
 volatile bool draw_buffer = true;
 
 void* live_draw_buffer(void* path_tracing_thread_info){
+    struct timespec delay;
+    delay.tv_nsec = 0;
+    delay.tv_sec = DRAW_DELAY_SECONDS;
     struct PathTracingThreadInfo info = *(struct PathTracingThreadInfo*)path_tracing_thread_info;
     while(draw_buffer){
         draw_screen_buffer(info.scene);
         G_display_image();
-        //TODO: allow for a delay here
+        nanosleep(&delay, NULL);
     }
     return 0;
 }
