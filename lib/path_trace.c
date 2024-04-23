@@ -15,9 +15,9 @@
 #include "mesh.h"
 #include "random.h"
 const double EPSILON = 0.000001;
-const int NUM_SHADOW_RAYS = 16;
+const int NUM_SHADOW_RAYS = 4;
 const int NUM_CAMERA_RAYS = 256;
-const int MAX_DIFFUSE_BOUNCES = 8;
+const int MAX_DIFFUSE_BOUNCES = 4;
 
 bool intersect_triangle(double* t_out, Vector2* barycentric_out, double closest_t, Ray ray, Triangle triangle){
     //TODO: precompute triangle normal
@@ -273,7 +273,7 @@ void set_pixel(Color3* screen_buffer, Color3 pixel, int width, int x, int y){
 void draw_screen_buffer(PathTracedScene scene){
     for(int y = 0; y < scene.height; y++){
         for (int x = 0; x < scene.width; x++){
-            Color3 color = get_pixel(scene.screen_buffer, scene.width, x, y);
+            Color3 color = vec3_scale(get_pixel(scene.screen_buffer, scene.width, x, y), scene.exposure);
             if(scene.tonemap != NULL) color = scene.tonemap(color);
             if(scene.color_transform != NULL) color = scene.color_transform(color);
             G_rgb(SPREAD_COL3(color));

@@ -24,6 +24,7 @@ typedef struct {
     int num_lights;
     PointLight* lights; //TODO: make this work nice with different light types
 
+    double exposure;
     Color3 (*color_transform)(Color3 color);
     Color3 (*tonemap)(Color3 color);
 } PathTracedScene;
