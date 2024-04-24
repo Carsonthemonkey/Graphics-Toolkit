@@ -52,7 +52,7 @@ void delete_float_image_buffer(Color3f* buffer){
     free(buffer);
 }
 
-void copy_image_to_float_buffer(Color3* source, Color3f* dest, int width, int height){
+void copy_image_to_float_image(Color3* source, Color3f* dest, int width, int height){
     for(int y = 0; y < height; y++){
         for(int x = 0; x < width; x++){
             Color3 pixel_color = get_image_buffer_pixel(source, x, y, width);

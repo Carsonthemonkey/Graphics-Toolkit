@@ -37,18 +37,9 @@ void init_denoiser(PathTracedScene* scene){
     oidnCommitFilter(filter);
 }
 
-void fill_denoise_buffer(Color3* image_buffer, Color3f* denoise_buffer, int width, int height){
-    int num_pixels = width * height;
-    for(int p = 0; p < num_pixels; p++){
-        int y = p / width;
-        int x = p - (y * width);
-        Color3 image_pixel = get_image_buffer_pixel(image_buffer, x, y, width);
-        denoise_buffer[p] = vec3_to_vec3f(image_pixel);
-    }
-}
-
 void denoise_image(PathTracedScene scene){
-    fill_denoise_buffer(scene.light_buffer, scene.denoise_buffer, scene.width, scene.height);
+    // fill_denoise_buffer(scene.light_buffer, scene.denoise_buffer, scene.width, scene.height);
+    copy_image_to_float_image(scene.light_buffer, scene.denoise_buffer, scene.width, scene.height);
     oidnExecuteFilter(filter);
 
     const char* errorMessage;
