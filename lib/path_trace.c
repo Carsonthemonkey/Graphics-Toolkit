@@ -259,21 +259,27 @@ void path_trace_scene(PathTracedScene scene, int y_start, int y_end){
     }
 }
 
-//TODO: Apply these color transforms elsewhere? so we can actually save the image easier. Maybe at the end of `path_trace_scene_multithreaded` or `path_trace_scene`
-void draw_screen_buffer(PathTracedScene scene){
-    int num_pixels = scene.width * scene.height;
-    struct timespec start, end;
-    double denoise_time;
-    clock_gettime(CLOCK_MONOTONIC, &start);
-    
-    denoise_image(scene);    
+// Performs post processing, writing the final image to the output buffer
+void process_output_image(PathTracedScene scene){
+    if(scene.denoise){
+        struct timespec start, end;
+        double denoise_time;
+        clock_gettime(CLOCK_MONOTONIC, &start);
 
-    clock_gettime(CLOCK_MONOTONIC, &end);
-    denoise_time = end.tv_sec - start.tv_sec;
-    denoise_time += (end.tv_nsec - start.tv_nsec) / 1000000000.0;
-    printf("Denoise time: %lfs\n", denoise_time);
-    copy_float_image_buffer(scene.denoise_buffer, scene.output_buffer, scene.width, scene.height);
-    draw_float_buffer(scene.output_buffer, scene.width, scene.height);
+        denoise_image(scene);
+
+        clock_gettime(CLOCK_MONOTONIC, &end);
+        denoise_time = end.tv_sec - start.tv_sec;
+        denoise_time += (end.tv_nsec - start.tv_nsec) / 1000000000.0;
+        printf("Denoise time: %lfs\n", denoise_time);
+        
+        copy_float_image_buffer(scene.denoise_buffer, scene.output_buffer, scene.width, scene.height);
+    }
+    else{
+        copy_image_to_float_image(scene.light_buffer, scene.output_buffer, scene.width, scene.height);
+    }
+
+    //TODO: perform post processing here
 }
 
 void clear_screen_buffer(Color3* light_buffer, Color3 color, int width, int height){
@@ -303,8 +309,10 @@ void* live_draw_buffer(void* path_tracing_thread_info){
     delay.tv_nsec = 0;
     delay.tv_sec = DRAW_DELAY_SECONDS;
     struct PathTracingThreadInfo info = *(struct PathTracingThreadInfo*)path_tracing_thread_info;
+    PathTracedScene scene = info.scene;
     while(draw_buffer){
-        draw_screen_buffer(info.scene);
+        process_output_image(scene);
+        draw_float_buffer(scene.output_buffer, scene.width, scene.height);
         G_display_image();
         nanosleep(&delay, NULL);
     }
