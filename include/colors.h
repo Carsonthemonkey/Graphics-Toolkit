@@ -46,6 +46,30 @@ Color3 srgb_to_linear(Color3 srgb_color);
  */
 Color3 aces_tonemap(Color3 color);
 
+/**
+ * @brief Transforms a linear color to the sRGB color space
+ * 
+ * @param linear_color The linear color to transform
+ * @return Color3 The color transformed to sRGB
+ */
+Color3f linear_to_srgbf(Color3f linear_color);
+
+/**
+ * @brief Transforms a color in the sRGB color space to linear
+ * 
+ * @param srgb_color The sRGB color
+ * @return Color3f The color transformed to linear
+ */
+Color3f srgb_to_linearft(Color3f srgb_color);
+
+/**
+ * @brief Applies tonemapping based on The Academy Color Encoding System (ACES)
+ * 
+ * @param color The color to tonemap
+ * @return Color3f The tonemapped color
+ */
+Color3f aces_tonemapf(Color3f color);
+
 #ifndef COLORS_H
 #define COLORS_H
 
