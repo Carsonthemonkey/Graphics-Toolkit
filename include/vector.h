@@ -202,6 +202,15 @@ Vector3f vec3_to_vec3f(Vector3 v);
  */
 Vector3 vec3f_to_vec3(Vector3f v);
 
+/**
+ * Scales a Vector3f by a given scale factor.
+ *
+ * @param v The Vector3 to be scaled.
+ * @param scale The scale factor.
+ * @return The scaled Vector3.
+ */
+Vector3f vec3f_scale(Vector3f v, double scale);
+
 
 double* vec3_to_array(Vector3* vec);
 

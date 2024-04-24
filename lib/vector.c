@@ -140,6 +140,14 @@ Vector3 vec3f_to_vec3(Vector3f v){
     };
 }
 
+Vector3f vec3f_scale(Vector3f v, double scale){
+    Vector3f result;
+    result.x = v.x * scale;
+    result.y = v.y * scale;
+    result.z = v.z * scale;
+    return result;
+}
+
 double* vec3_to_array(Vector3* vec){
     //exists so that it's behaviour can be updated later
     return (double*)vec;
