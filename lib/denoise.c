@@ -39,6 +39,7 @@ void init_denoiser(PathTracedScene* scene){
 
 void denoise_image(PathTracedScene scene){
     // fill_denoise_buffer(scene.light_buffer, scene.denoise_buffer, scene.width, scene.height);
+    //TODO: This should probably not happen in this function
     copy_image_to_float_image(scene.light_buffer, scene.denoise_buffer, scene.width, scene.height);
     oidnExecuteFilter(filter);
 
