@@ -49,6 +49,20 @@ typedef struct {
 } RayHitInfo;
 
 /**
+ * @brief Initializes buffers and denoiser for a scene
+ * 
+ * @param scene The scene to initialize
+ */
+void init_scene(PathTracedScene* scene);
+
+
+/**
+ * @brief Frees all resources allocated for a scene
+ * 
+ * @param scene The scene to cleanup
+ */
+void cleanup_scene(PathTracedScene* scene);
+/**
  * @brief Finds the intersection of a ray with a given triangle
  * 
  * @param t_out A pointer to save the distance of the triangle intersections

@@ -16,4 +16,11 @@ void init_denoiser(PathTracedScene* scene);
  */
 void denoise_image(PathTracedScene scene);
 
+/**
+ * @brief Frees all denoiser resources
+ * 
+ * @param scene The scene for which the denoiser was initialized
+ */
+void cleanup_denoiser(PathTracedScene* scene);
+
 #endif

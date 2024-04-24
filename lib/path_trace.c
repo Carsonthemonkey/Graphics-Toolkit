@@ -26,6 +26,21 @@ const int MAX_DIFFUSE_BOUNCES = 4;
 
 const int DRAW_DELAY_SECONDS = 5;
 
+void init_scene(PathTracedScene* scene){
+    scene->light_buffer = create_image_buffer(scene->width, scene->height);
+    scene->output_buffer = create_float_image_buffer(scene->width, scene->height);
+    rand_init();
+    init_denoiser(scene);
+}
+
+void cleanup_scene(PathTracedScene* scene){
+    delete_image_buffer(scene->light_buffer);
+    scene->light_buffer = NULL;
+    delete_float_image_buffer(scene->output_buffer);
+    scene->output_buffer = NULL;
+    cleanup_denoiser(scene);
+}
+
 bool intersect_triangle(double* t_out, Vector2* barycentric_out, double closest_t, Ray ray, Triangle triangle){
     //TODO: precompute triangle normal
     //I don't really understand this intuitively. It would be a good idea to go back to this to get a better grasp on it
