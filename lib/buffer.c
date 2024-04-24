@@ -63,6 +63,18 @@ void copy_image_to_float_image(Color3* source, Color3f* dest, int width, int hei
     }
 }
 
+void apply_pixel_filter_to_float_image(Color3f* buffer,
+                                       Color3f (*filter)(Color3f),
+                                       int width, int height){
+    for(int y = 0; y < height; y++){
+        for(int x = 0; x < width; x++){
+            Color3f current = get_float_image_buffer_pixel(buffer, x, y, width);
+            Color3f new = filter(current);
+            set_float_image_buffer_pixel(buffer, new, x, y, width);
+        }
+    }
+}
+
 void draw_float_buffer(Color3f* buffer, int width, int height){
     for(int y = 0; y < height; y++){
         for(int x = 0; x < width; x++){

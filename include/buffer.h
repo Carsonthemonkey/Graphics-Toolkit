@@ -93,6 +93,16 @@ void set_float_image_buffer_pixel(Color3f* buffer, Color3f pixel_color, int x, i
 void copy_float_image_buffer(Color3f* source, Color3f* dest, int width, int height);
 
 /**
+ * @brief Applies a given filter to every pixel in the buffer
+ * 
+ * @param buffer The buffer to use 
+ * @param filter A function pointer to the filter that will be applied to each pixel
+ * @param width The width of the screen
+ * @param height The height of the screen
+ */
+void apply_pixel_filter_to_float_image(Color3f* buffer, Color3f (*filter)(Color3f), int width, int height);
+
+/**
  * @brief Deletes a buffer from memory
  * 
  * @param buffer The buffer to delete
