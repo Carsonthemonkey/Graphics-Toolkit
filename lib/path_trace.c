@@ -272,7 +272,8 @@ void draw_screen_buffer(PathTracedScene scene){
     denoise_time = end.tv_sec - start.tv_sec;
     denoise_time += (end.tv_nsec - start.tv_nsec) / 1000000000.0;
     printf("Denoise time: %lfs\n", denoise_time);
-    draw_float_buffer(scene.denoise_buffer, scene.width, scene.height);
+    copy_float_image_buffer(scene.denoise_buffer, scene.output_buffer, scene.width, scene.height);
+    draw_float_buffer(scene.output_buffer, scene.width, scene.height);
 }
 
 void clear_screen_buffer(Color3* light_buffer, Color3 color, int width, int height){
