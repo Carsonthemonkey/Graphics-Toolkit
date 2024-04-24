@@ -32,8 +32,8 @@ typedef struct {
     // Post processing
     bool denoise;
     double exposure;
-    Color3 (*color_transform)(Color3 color);
-    Color3 (*tonemap)(Color3 color);
+    Color3f (*color_transform)(Color3f color);
+    Color3f (*tonemap)(Color3f color);
 } PathTracedScene;
 
 typedef struct {

@@ -294,7 +294,20 @@ void process_output_image(PathTracedScene scene){
         copy_image_to_float_image(scene.light_buffer, scene.output_buffer, scene.width, scene.height);
     }
 
-    //TODO: perform post processing here
+    if(scene.exposure != 1){
+        for(int y = 0; y < scene.width; y++){
+            for(int x = 0; x < scene.height; x++){
+                Color3f prev = get_float_image_buffer_pixel(scene.output_buffer, x, y, scene.width);
+                Color3f new = vec3f_scale(prev, scene.exposure);
+                set_float_image_buffer_pixel(scene.output_buffer, new, x, y, scene.width);
+            }
+        }
+    }
+
+    if(scene.color_transform != NULL)
+    apply_pixel_filter_to_float_image(scene.output_buffer, scene.color_transform, scene.width, scene.height);
+    if(scene.tonemap != NULL)
+    apply_pixel_filter_to_float_image(scene.output_buffer, scene.tonemap, scene.width, scene.height);
 }
 
 void clear_screen_buffer(Color3* light_buffer, Color3 color, int width, int height){
