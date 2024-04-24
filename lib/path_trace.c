@@ -351,7 +351,6 @@ void path_trace_scene_multithreaded(PathTracedScene scene){
     for(int t = 0; t < num_threads; t++){
         // set up args
         thread_args[t].scene = scene;
-        // Fix rounding errors here
         thread_args[t].y_start = (int)(t * ((double)scene.height / num_threads));
         thread_args[t].y_end = (int)((t + 1) * ((double)scene.height / num_threads));
 
