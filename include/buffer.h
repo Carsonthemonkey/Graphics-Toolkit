@@ -35,6 +35,16 @@ Color3 get_image_buffer_pixel(Color3* buffer, int x, int y, int width);
 void set_image_buffer_pixel(Color3* buffer, Color3 pixel, int x, int y, int width);
 
 /**
+ * @brief Copies the contents of one image buffer to another
+ * 
+ * @param source The image buffer that will be copied
+ * @param dest The destination where the data will be written to
+ * @param width The width of the image buffer
+ * @param height The height of the image buffer
+ */
+void copy_image_buffer(Color3* source, Color3* dest, int width, int height);
+
+/**
  * @brief Deletes a buffer from memory
  * 
  * @param buffer The buffer to delete
@@ -73,10 +83,30 @@ Color3f get_float_image_buffer_pixel(Color3f* buffer, int x, int y, int width);
 void set_float_image_buffer_pixel(Color3f* buffer, Color3f pixel_color, int x, int y, int width);
 
 /**
+ * @brief Copies the contents of one image buffer to another
+ * 
+ * @param source The image buffer that will be copied
+ * @param dest The destination where the data will be written to
+ * @param width The width of the image buffer
+ * @param height The height of the image buffer
+ */
+void copy_float_image_buffer(Color3f* source, Color3f* dest, int width, int height);
+
+/**
  * @brief Deletes a buffer from memory
  * 
  * @param buffer The buffer to delete
  */
 void delete_float_image_buffer(Color3f* buffer);
+
+/**
+ * @brief Copies the of an image buffer in double precision format to a buffer in floating point format
+ * 
+ * @param source The image buffer that will be copied
+ * @param dest The destination where the data will be written to
+ * @param width The width of the image buffer
+ * @param height The height of the image buffer
+ */
+void copy_image_to_float_image(Color3* source, Color3f* dest, int width, int height);
 
 #endif
