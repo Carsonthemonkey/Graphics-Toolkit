@@ -44,9 +44,6 @@ void fill_denoise_buffer(Color3* image_buffer, Color3f* denoise_buffer, int widt
         int x = p - (y * width);
         Color3 image_pixel = get_image_buffer_pixel(image_buffer, x, y, width);
         denoise_buffer[p] = vec3_to_vec3f(image_pixel);
-        // denoise_buffer[p * 3] = (float)image_pixel.r;
-        // denoise_buffer[(p * 3) + 1] = (float)image_pixel.g;
-        // denoise_buffer[(p * 3) + 2] = (float)image_pixel.b;
     }
 }
 
