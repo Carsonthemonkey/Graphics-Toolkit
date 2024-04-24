@@ -261,10 +261,6 @@ void path_trace_scene(PathTracedScene scene, int y_start, int y_end){
 
 //TODO: Apply these color transforms elsewhere? so we can actually save the image easier. Maybe at the end of `path_trace_scene_multithreaded` or `path_trace_scene`
 void draw_screen_buffer(PathTracedScene scene){
-    //! I am making this function ugly an inefficient to more quickly implement denoising. Clean this process up before merging with path_tracing branch
-    //! OpenImageDenoise should not be run every draw like this
-    //? Does OpenImageDenoise only work on floats? let's convert image to floats for now just to be safe
-
     int num_pixels = scene.width * scene.height;
     struct timespec start, end;
     double denoise_time;
@@ -276,34 +272,7 @@ void draw_screen_buffer(PathTracedScene scene){
     denoise_time = end.tv_sec - start.tv_sec;
     denoise_time += (end.tv_nsec - start.tv_nsec) / 1000000000.0;
     printf("Denoise time: %lfs\n", denoise_time);
-
-    for(int p = 0; p < num_pixels; p++){
-        int y = p / scene.width;
-        int x = p - (y * scene.width);
-        
-        Color3f draw_color = scene.denoise_buffer[p];
-        // float r = scene.denoise_buffer[p * 3];
-        // float g = scene.denoise_buffer[(p * 3) + 1];
-        // float b = scene.denoise_buffer[(p * 3) + 2];
-
-        // Color3 draw_color = (Color3){(double)r, (double)g, (double)b};
-        // draw_color = vec3_scale(draw_color, scene.exposure);
-        // if(scene.tonemap != NULL) draw_color = scene.tonemap(draw_color);
-        // if(scene.color_transform != NULL) draw_color = scene.color_transform(draw_color);
-        G_rgb(SPREAD_COL3(draw_color));
-        G_pixel(x, y);
-    }
-    
-    
-    // for(int y = 0; y < scene.height; y++){
-    //     for (int x = 0; x < scene.width; x++){
-    //         Color3 color = vec3_scale(get_pixel(scene.screen_buffer, scene.width, x, y), scene.exposure);
-    //         // if(scene.tonemap != NULL) color = scene.tonemap(color);
-    //         // if(scene.color_transform != NULL) color = scene.color_transform(color);
-    //         // G_rgb(SPREAD_COL3(color));
-    //         // G_pixel(x, y);
-    //     }
-    // }
+    draw_float_buffer(scene.denoise_buffer, scene.width, scene.height);
 }
 
 void clear_screen_buffer(Color3* light_buffer, Color3 color, int width, int height){

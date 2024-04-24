@@ -109,4 +109,12 @@ void delete_float_image_buffer(Color3f* buffer);
  */
 void copy_image_to_float_image(Color3* source, Color3f* dest, int width, int height);
 
+/**
+ * @brief Draws a floating point buffer to the screen
+ * 
+ * @param buffer The buffer to draw
+ * @param width The width of the buffer
+ * @param height The height of the buffer
+ */
+void draw_float_buffer(Color3f* buffer, int width, int height);
 #endif
