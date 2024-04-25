@@ -140,6 +140,7 @@ bool raycast(RayHitInfo* out, PathTracedScene scene, Ray ray){
                         vec3_scale(tri.c->normal, surface_coords.y)
                     );
                     smooth_normal = vec3_add(smooth_normal, vec3_scale(tri.a->normal, 1 - surface_coords.x - surface_coords.y));
+                    vec3_normalize(&smooth_normal);
                     out->normal = smooth_normal;
                 }
                 else{
@@ -252,7 +253,6 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth, RayHitInfo* first_h
             Vector3 light_dir = vec3_normalized((Vector3){1, 1, -1});
             throughput = vec3_mult(throughput, mesh.material.specular_color);
             throughput = vec3_scale(throughput, fresnel_schlick(1.33, ray.direction, hit.normal));
-            vec3_normalize(&hit.normal);
             double tr = trowbridge_reitz_ggx(hit.normal,vec3_normalized(vec3_add(hit.normal, light_dir)), 0.1 * 0.1);
             Color3 tr_col = (Color3){tr, tr, tr};
             // double fs = fresnel_schlick(1.33, ray.direction, hit.normal);
