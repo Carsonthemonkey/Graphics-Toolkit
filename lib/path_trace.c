@@ -221,6 +221,18 @@ double fresnel_schlick(double ior, Vector3 view, Vector3 normal){
     return f0 + (1 - f0) * x5;
 }
 
+double cook_torrence_brdf(Vector3 incoming, Vector3 outgoing, Vector3 normal){
+    //TODO: add ior to material
+    double fresnel = fresnel_schlick(1.45, incoming, normal);
+    double geometry = geometry_smith(normal, incoming, outgoing, 0.3);
+    double distribution = trowbridge_reitz_ggx(normal, vec3_normalized(vec3_add(normal, outgoing)), 0.3);
+
+    double n_dot_incoming = vec3_dot_prod(incoming, normal);
+    double n_dot_outgoing = vec3_dot_prod(outgoing, normal);
+    double denom = 4 * n_dot_incoming * n_dot_outgoing;
+    return (fresnel * geometry * distribution) / denom;
+}
+
 Color3 path_trace(PathTracedScene scene, Ray ray, int depth, RayHitInfo* first_hit_out){
     Color3 pixel_color = {0, 0, 0};
     Color3 throughput = {1, 1, 1};
@@ -243,9 +255,6 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth, RayHitInfo* first_h
         pixel_color = vec3_add(pixel_color, vec3_mult(vec3_mult(direct_lighting(scene, hit_location, hit.normal), mesh.material.base_color), throughput));
         
         /* Indirect Lighting */
-
-        
-
         ray.origin = hit_location;
         if(rand_double() < mesh.material.specular){
             /* Specular Reflection */
