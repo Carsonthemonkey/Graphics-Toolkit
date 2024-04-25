@@ -14,19 +14,28 @@ typedef struct {
 } PointLight;
 
 typedef struct {
+    // image buffers
     int width, height;
-    Color3* screen_buffer;
+    Color3* light_buffer;
+    Color3f* denoise_buffer;
+    Color3f* normal_buffer;
+    Color3f* albedo_buffer;
+    Color3f* output_buffer;
 
+    // Camera
     Camera* main_camera;
 
+    // Scene objects
     int num_meshes;
     Mesh* meshes;
     int num_lights;
     PointLight* lights; //TODO: make this work nice with different light types
 
+    // Post processing
+    bool denoise;
     double exposure;
-    Color3 (*color_transform)(Color3 color);
-    Color3 (*tonemap)(Color3 color);
+    Color3f (*color_transform)(Color3f color);
+    Color3f (*tonemap)(Color3f color);
 } PathTracedScene;
 
 typedef struct {
@@ -41,6 +50,20 @@ typedef struct {
     Mesh intersected_mesh;
 } RayHitInfo;
 
+/**
+ * @brief Initializes buffers and denoiser for a scene
+ * 
+ * @param scene The scene to initialize
+ */
+void init_scene(PathTracedScene* scene);
+
+
+/**
+ * @brief Frees all resources allocated for a scene
+ * 
+ * @param scene The scene to cleanup
+ */
+void cleanup_scene(PathTracedScene* scene);
 /**
  * @brief Finds the intersection of a ray with a given triangle
  * 
@@ -61,53 +84,21 @@ bool intersect_triangle(double* t_out, Vector2* barycentric_out, double closest_
 void path_trace_scene(PathTracedScene scene, int y_start, int y_end);
 
 /**
- * @brief Create a screen buffer
- * 
- * @param width The width of the screen
- * @param height The height of the screen
- * @return Color3* A pointer to the screen buffer`
- */
-Color3* create_screen_buffer(int width, int height);
-
-/**
- * @brief Get the color of a given pixel in the screen buffer
- * 
- * @param screen_buffer The screen buffer to sample
- * @param width The width of the screen
- * @param x The x coordinate of the pixel
- * @param y The y coordinate of the pixel
- * @return Color3 The color at the x and y point
- */
-Color3 get_pixel(Color3* screen_buffer, int width, int x, int y);
-
-/**
- * @brief Set a pixel on the screen buffer to a given color
- * 
- * @param screen_buffer The screen buffer to set the pixel on
- * @param pixel The color of the pixel
- * @param width The width of the screen
- * @param x The x coordinate of the pixel
- * @param y The y coordinate of the pixel
- */
-void set_pixel(Color3* screen_buffer, Color3 pixel, int width, int x, int y);
-
-/**
  * @brief Draws the screen buffer to the screen
  * 
  * @param scene The scene whose screen buffer will be drawn
  */
 void draw_screen_buffer(PathTracedScene scene);
 
-
 /**
  * @brief Clears the screen buffer to a given color
  * 
- * @param screen_buffer The buffer to clear
+ * @param light_buffer The buffer to clear
  * @param color The color to set it to
  * @param width The width of the buffer
  * @param height The height of the buffer
  */
-void clear_screen_buffer(Color3* screen_buffer, Color3 color, int width, int height);
+void clear_screen_buffer(Color3* light_buffer, Color3 color, int width, int height);
 
 /**
  * @brief Draws an entire path traced scene using multiple threads

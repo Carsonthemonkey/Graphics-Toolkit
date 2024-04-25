@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-I./include -g -I/opt/X11/include -Ofast
+CFLAGS=-I./include -g -I/opt/X11/include -I./vendor/OpenImageDenoise/include -Ofast
 SRC_DIR=lib
 OBJ_DIR=out
 INCLUDE_DIR=include

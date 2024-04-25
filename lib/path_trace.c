@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <pthread.h>
+#include <time.h>
+#include <OpenImageDenoise/oidn.h>
 #include "path_trace.h"
 #include "FPToolkit.h"
 #include "trig.h"
@@ -14,10 +16,30 @@
 #include "vector.h"
 #include "mesh.h"
 #include "random.h"
+#include "denoise.h"
+#include "buffer.h"
+
 const double EPSILON = 0.000001;
-const int NUM_SHADOW_RAYS = 4;
-const int NUM_CAMERA_RAYS = 256;
+const int NUM_SHADOW_RAYS = 1;
+const int NUM_CAMERA_RAYS = 128;
 const int MAX_DIFFUSE_BOUNCES = 4;
+
+const int DRAW_DELAY_SECONDS = 5;
+
+void init_scene(PathTracedScene* scene){
+    scene->light_buffer = create_image_buffer(scene->width, scene->height);
+    scene->output_buffer = create_float_image_buffer(scene->width, scene->height);
+    rand_init();
+    init_denoiser(scene);
+}
+
+void cleanup_scene(PathTracedScene* scene){
+    delete_image_buffer(scene->light_buffer);
+    scene->light_buffer = NULL;
+    delete_float_image_buffer(scene->output_buffer);
+    scene->output_buffer = NULL;
+    cleanup_denoiser(scene);
+}
 
 bool intersect_triangle(double* t_out, Vector2* barycentric_out, double closest_t, Ray ray, Triangle triangle){
     //TODO: precompute triangle normal
@@ -160,7 +182,7 @@ Color3 direct_lighting(PathTracedScene scene, Vector3 position, Vector3 surface_
 }
 
 
-Color3 path_trace(PathTracedScene scene, Ray ray, int depth){
+Color3 path_trace(PathTracedScene scene, Ray ray, int depth, RayHitInfo* first_hit_out){
     Color3 pixel_color = {0, 0, 0};
     Color3 throughput = {1, 1, 1};
     for(int r = 0; r < depth; r++){
@@ -171,6 +193,7 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth){
             pixel_color = vec3_add(pixel_color, (Color3){BLACK});
             break;
         }
+        if(r == 0) *first_hit_out = hit;
         Mesh mesh = hit.intersected_mesh;
         Vector3 hit_location =  vec3_add(ray.origin, vec3_scale(ray.direction, hit.distance));
 
@@ -209,10 +232,17 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth){
 }
 
 void add_sample(Color3* buffer, Color3 pixel, int width, int x, int y, int sample_num){
-    Color3 prev = get_pixel(buffer, width, x, y);
+    Color3 prev = get_image_buffer_pixel(buffer, x, y, width);
     double contribution = 1.0 / sample_num;
     Color3 new_color = vec3_add(vec3_scale(prev, 1.0 - contribution), vec3_scale(pixel, contribution));
-    set_pixel(buffer, new_color, width, x, y);
+    set_image_buffer_pixel(buffer, new_color, x, y, width);
+}
+
+void add_samplef(Color3f* buffer, Color3f pixel, int width, int x, int y, int sample_num){
+    Color3f prev = get_float_image_buffer_pixel(buffer, x, y, width);
+    double contribution = 1.0 / sample_num;
+    Color3f new_color = vec3f_add(vec3f_scale(prev, 1.0 - contribution), vec3f_scale(pixel, contribution));
+    set_float_image_buffer_pixel(buffer, new_color, x, y, width);
 }
 
 void path_trace_scene(PathTracedScene scene, int y_start, int y_end){
@@ -245,47 +275,59 @@ void path_trace_scene(PathTracedScene scene, int y_start, int y_end){
                     ),
                     .direction=vec3_normalized(vec3_sub(focal_point, jittered_ray.origin))
                 };
-                pixel_color = vec3_add(pixel_color, path_trace(scene, jittered_ray, MAX_DIFFUSE_BOUNCES));
-                add_sample(scene.screen_buffer, pixel_color, scene.width, x, y, sample + 1);
+                RayHitInfo first_hit;
+                first_hit.distance = -1;
+                pixel_color = vec3_add(pixel_color, path_trace(scene, jittered_ray, MAX_DIFFUSE_BOUNCES, &first_hit));
+                if(first_hit.distance != -1){
+                    add_samplef(scene.albedo_buffer, vec3_to_vec3f(first_hit.intersected_mesh.material.base_color), scene.width, x, y, sample + 1);
+                    add_samplef(scene.normal_buffer, vec3_to_vec3f(first_hit.normal), scene.width, x, y, sample + 1);
+                }
+                add_sample(scene.light_buffer, pixel_color, scene.width, x, y, sample + 1);
             }
         }
     }
 }
 
-Color3* create_screen_buffer(int width, int height){
-    Color3* buffer = (Color3*)malloc(sizeof(Color3) * width * height);
-    if(buffer == NULL){
-        fprintf(stderr, "Failed to allocate memory for screen buffer\n");
-        exit(1);
+// Performs post processing, writing the final image to the output buffer
+void process_output_image(PathTracedScene scene){
+    if(scene.denoise){
+        struct timespec start, end;
+        double denoise_time;
+        clock_gettime(CLOCK_MONOTONIC, &start);
+
+        denoise_image(scene);
+
+        clock_gettime(CLOCK_MONOTONIC, &end);
+        denoise_time = end.tv_sec - start.tv_sec;
+        denoise_time += (end.tv_nsec - start.tv_nsec) / 1000000000.0;
+        printf("Denoise time: %lfs\n", denoise_time);
+        
+        copy_float_image_buffer(scene.denoise_buffer, scene.output_buffer, scene.width, scene.height);
     }
-    return buffer;
-}
+    else{
+        copy_image_to_float_image(scene.light_buffer, scene.output_buffer, scene.width, scene.height);
+    }
 
-Color3 get_pixel(Color3* screen_buffer, int width, int x, int y){
-    return screen_buffer[(width * y) + x];
-}
-
-void set_pixel(Color3* screen_buffer, Color3 pixel, int width, int x, int y){
-    screen_buffer[(width * y) + x] = pixel;
-}
-
-//TODO: Apply these color transforms elsewhere? so we can actually save the image easier. Maybe at the end of `path_trace_scene_multithreaded` or `path_trace_scene`
-void draw_screen_buffer(PathTracedScene scene){
-    for(int y = 0; y < scene.height; y++){
-        for (int x = 0; x < scene.width; x++){
-            Color3 color = vec3_scale(get_pixel(scene.screen_buffer, scene.width, x, y), scene.exposure);
-            if(scene.tonemap != NULL) color = scene.tonemap(color);
-            if(scene.color_transform != NULL) color = scene.color_transform(color);
-            G_rgb(SPREAD_COL3(color));
-            G_pixel(x, y);
+    if(scene.exposure != 1){
+        for(int y = 0; y < scene.width; y++){
+            for(int x = 0; x < scene.height; x++){
+                Color3f prev = get_float_image_buffer_pixel(scene.output_buffer, x, y, scene.width);
+                Color3f new = vec3f_scale(prev, scene.exposure);
+                set_float_image_buffer_pixel(scene.output_buffer, new, x, y, scene.width);
+            }
         }
     }
+
+    if(scene.color_transform != NULL)
+    apply_pixel_filter_to_float_image(scene.output_buffer, scene.color_transform, scene.width, scene.height);
+    if(scene.tonemap != NULL)
+    apply_pixel_filter_to_float_image(scene.output_buffer, scene.tonemap, scene.width, scene.height);
 }
 
-void clear_screen_buffer(Color3* screen_buffer, Color3 color, int width, int height){
+void clear_screen_buffer(Color3* light_buffer, Color3 color, int width, int height){
     for (int y = 0; y < height; y++){
         for (int x = 0; x < width; x++){
-            set_pixel(screen_buffer, color, width, x, y);
+            set_image_buffer_pixel(light_buffer, color, x, y, width);
         }
     }
 }
@@ -305,11 +347,16 @@ void* run_render_thread(void* path_tracing_thread_info){
 volatile bool draw_buffer = true;
 
 void* live_draw_buffer(void* path_tracing_thread_info){
+    struct timespec delay;
+    delay.tv_nsec = 0;
+    delay.tv_sec = DRAW_DELAY_SECONDS;
     struct PathTracingThreadInfo info = *(struct PathTracingThreadInfo*)path_tracing_thread_info;
+    PathTracedScene scene = info.scene;
     while(draw_buffer){
-        draw_screen_buffer(info.scene);
+        process_output_image(scene);
+        draw_float_buffer(scene.output_buffer, scene.width, scene.height);
         G_display_image();
-        //TODO: allow for a delay here
+        nanosleep(&delay, NULL);
     }
     return 0;
 }
@@ -324,7 +371,6 @@ void path_trace_scene_multithreaded(PathTracedScene scene){
     for(int t = 0; t < num_threads; t++){
         // set up args
         thread_args[t].scene = scene;
-        // Fix rounding errors here
         thread_args[t].y_start = (int)(t * ((double)scene.height / num_threads));
         thread_args[t].y_end = (int)((t + 1) * ((double)scene.height / num_threads));
 
@@ -343,9 +389,8 @@ void path_trace_scene_multithreaded(PathTracedScene scene){
         pthread_join(draw_thread, NULL);
         draw_buffer = true;
     }
-    else{
-        draw_screen_buffer(scene);
-    }
+    process_output_image(scene);
+    draw_float_buffer(scene.output_buffer, scene.width, scene.height);
 }
 
 void debug_draw_light(PointLight light, Camera cam, double width, double height){

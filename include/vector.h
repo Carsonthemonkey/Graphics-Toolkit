@@ -175,6 +175,51 @@ Vector3 vec3_lerp(Vector3 a, Vector3 b, double t);
  */
 Vector3 vec3_reflection(Vector3 incoming, Vector3 normal);
 
+typedef union {
+    struct {
+        float x;
+        float y;
+        float z;
+    };
+    struct {
+        float r;
+        float g;
+        float b;
+    };
+} Vector3f;
+
+/**
+ * @brief Construct a new floating point vector from a double precision vector
+ * 
+ * @param v The double precision vector to convert to a floating point vector
+ */
+Vector3f vec3_to_vec3f(Vector3 v);
+
+/**
+ * @brief Construct a new double precision vector from a floating point vector
+ * 
+ * @param v The floating point vector to convert to a double precision vector
+ */
+Vector3 vec3f_to_vec3(Vector3f v);
+
+/**
+ * Scales a Vector3f by a given scale factor.
+ *
+ * @param v The Vector3 to be scaled.
+ * @param scale The scale factor.
+ * @return The scaled Vector3.
+ */
+Vector3f vec3f_scale(Vector3f v, double scale);
+
+/**
+ * Adds two 3D vectors.
+ *
+ * @param a The first vector.
+ * @param b The second vector.
+ * @return The sum of the two vectors.
+ */
+Vector3f vec3f_add(Vector3f a, Vector3f b);
+
 
 double* vec3_to_array(Vector3* vec);
 
