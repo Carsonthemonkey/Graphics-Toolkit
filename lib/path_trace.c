@@ -21,7 +21,7 @@
 
 const double EPSILON = 0.000001;
 const int NUM_SHADOW_RAYS = 1;
-const int NUM_CAMERA_RAYS = 16;
+const int NUM_CAMERA_RAYS = 128;
 const int MAX_DIFFUSE_BOUNCES = 4;
 
 const int DRAW_DELAY_SECONDS = 5;
@@ -377,9 +377,9 @@ void path_trace_scene_multithreaded(PathTracedScene scene){
         pthread_create(&threads[t], NULL, run_render_thread, (void*)&thread_args[t]);
     }
     pthread_t draw_thread;
-    // if(LIVE_DRAW){
-    //     pthread_create(&draw_thread, NULL, live_draw_buffer, (void*)&thread_args[0]); // pass it any info struct for now
-    // }
+    if(LIVE_DRAW){
+        pthread_create(&draw_thread, NULL, live_draw_buffer, (void*)&thread_args[0]); // pass it any info struct for now
+    }
     // Join threads
     for(int t = 0; t < num_threads; t++){
         pthread_join(threads[t], NULL);
