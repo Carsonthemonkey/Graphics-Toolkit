@@ -182,9 +182,16 @@ Color3 direct_lighting(PathTracedScene scene, Vector3 position, Vector3 surface_
     return direct_light;
 }
 
+//TODO: put in vector.h and vector.c
+Vector3 vec3_halfway(Vector3 a, Vector3 b){
+    return vec3_scale(vec3_add(a, b), 0.5);
+}
+
+
 double trowbridge_reitz_ggx(Vector3 normal, Vector3 halfway, double a){
-    double d = M_PI * (vec3_dot_prod(normal, halfway) * ((a * a) - 1) + 1);
-    double denom = d * d;
+    double n_dot_h = fmax(vec3_dot_prod(normal, halfway), 0.0);
+    double d = (n_dot_h * n_dot_h * ((a * a) - 1) + 1);
+    double denom = M_PI * d * d;
     return (a * a) / denom;
 }
 
@@ -226,7 +233,7 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth, RayHitInfo* first_h
         }
         if(r == 0) *first_hit_out = hit;
         Mesh mesh = hit.intersected_mesh;
-        Vector3 hit_location =  vec3_add(ray.origin, vec3_scale(ray.direction, hit.distance));
+        Vector3 hit_location = vec3_add(ray.origin, vec3_scale(ray.direction, hit.distance));
 
         /* Emissive Materials */
         pixel_color = vec3_add(pixel_color, vec3_mult(throughput, vec3_scale(mesh.material.emissive, mesh.material.emission_strength)));
@@ -241,16 +248,17 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth, RayHitInfo* first_h
         ray.origin = hit_location;
         if(rand_double() < mesh.material.specular){
             /* Specular Reflection */
-            Vector3 random_dir = vec3_normalized(random_point_in_sphere(1));
-            
+            // Vector3 random_dir = vec3_normalized(random_point_in_sphere(1));
+            Vector3 light_dir = vec3_normalized((Vector3){1, 1, -1});
             throughput = vec3_mult(throughput, mesh.material.specular_color);
             throughput = vec3_scale(throughput, fresnel_schlick(1.33, ray.direction, hit.normal));
-            double fs = fresnel_schlick(1.33, ray.direction, hit.normal);
-            Color3 fs_col = vec3_scale((Color3){fs,fs,fs}, 1);
-            vec3_print(fs_col);
-            return fs_col;
-            pixel_color = (Color3){fs, fs, fs};
-            ray.direction = random_dir;
+            vec3_normalize(&hit.normal);
+            double tr = trowbridge_reitz_ggx(hit.normal,vec3_normalized(vec3_add(hit.normal, light_dir)), 0.1 * 0.1);
+            Color3 tr_col = (Color3){tr, tr, tr};
+            // double fs = fresnel_schlick(1.33, ray.direction, hit.normal);
+            // Color3 fs_col = vec3_scale((Color3){fs,fs,fs}, 1);
+            return tr_col;
+            // ray.direction = random_dir;
             // throughput = vec3_mult(throughput, mesh.material.specular_color);
             // Vector3 diffuse_direction;
             // if(mesh.material.roughness > 0) diffuse_direction = vec3_normalized(vec3_add(random_point_in_sphere(1), hit.normal));
