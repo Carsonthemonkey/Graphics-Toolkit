@@ -169,6 +169,7 @@ Color3 direct_lighting(PathTracedScene scene, Vector3 position, Vector3 surface_
             shadow.direction = vec3_normalized(vec3_sub(dest, shadow.origin));
 
             if(!hits_anything(scene, shadow, light_distance)){
+                //TODO!: This should probably be moved away from here. This is specific to the Lambertian BRDF which only works for diffuse surfaces. This should be generalized to 
                 // Lambert's Cosine Law 
                 double incident_dot = fmax(vec3_dot_prod(surface_normal, shadow.direction), 0);
                 shadow_ray_hit_percentage += 1.0 / NUM_SHADOW_RAYS * incident_dot;
