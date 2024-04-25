@@ -21,7 +21,7 @@
 
 const double EPSILON = 0.000001;
 const int NUM_SHADOW_RAYS = 1;
-const int NUM_CAMERA_RAYS = 512;
+const int NUM_CAMERA_RAYS = 16;
 const int MAX_DIFFUSE_BOUNCES = 4;
 
 const int DRAW_DELAY_SECONDS = 5;
@@ -182,7 +182,7 @@ Color3 direct_lighting(PathTracedScene scene, Vector3 position, Vector3 surface_
 }
 
 
-Color3 path_trace(PathTracedScene scene, Ray ray, int depth){
+Color3 path_trace(PathTracedScene scene, Ray ray, int depth, RayHitInfo* first_hit_out){
     Color3 pixel_color = {0, 0, 0};
     Color3 throughput = {1, 1, 1};
     for(int r = 0; r < depth; r++){
@@ -193,6 +193,7 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth){
             pixel_color = vec3_add(pixel_color, (Color3){BLACK});
             break;
         }
+        if(r == 0) *first_hit_out = hit;
         Mesh mesh = hit.intersected_mesh;
         Vector3 hit_location =  vec3_add(ray.origin, vec3_scale(ray.direction, hit.distance));
 
@@ -237,6 +238,13 @@ void add_sample(Color3* buffer, Color3 pixel, int width, int x, int y, int sampl
     set_image_buffer_pixel(buffer, new_color, x, y, width);
 }
 
+void add_samplef(Color3f* buffer, Color3f pixel, int width, int x, int y, int sample_num){
+    Color3f prev = get_float_image_buffer_pixel(buffer, x, y, width);
+    double contribution = 1.0 / sample_num;
+    Color3f new_color = vec3f_add(vec3f_scale(prev, 1.0 - contribution), vec3f_scale(pixel, contribution));
+    set_float_image_buffer_pixel(buffer, new_color, x, y, width);
+}
+
 void path_trace_scene(PathTracedScene scene, int y_start, int y_end){
     double dwidth = (double)scene.width;
     double dheight = (double)scene.height;
@@ -267,7 +275,13 @@ void path_trace_scene(PathTracedScene scene, int y_start, int y_end){
                     ),
                     .direction=vec3_normalized(vec3_sub(focal_point, jittered_ray.origin))
                 };
-                pixel_color = vec3_add(pixel_color, path_trace(scene, jittered_ray, MAX_DIFFUSE_BOUNCES));
+                RayHitInfo first_hit;
+                first_hit.distance = -1;
+                pixel_color = vec3_add(pixel_color, path_trace(scene, jittered_ray, MAX_DIFFUSE_BOUNCES, &first_hit));
+                if(first_hit.distance != -1){
+                    add_samplef(scene.albedo_buffer, vec3_to_vec3f(first_hit.intersected_mesh.material.base_color), scene.width, x, y, sample + 1);
+                    add_samplef(scene.normal_buffer, vec3_to_vec3f(first_hit.normal), scene.width, x, y, sample + 1);
+                }
                 add_sample(scene.light_buffer, pixel_color, scene.width, x, y, sample + 1);
             }
         }
@@ -363,9 +377,9 @@ void path_trace_scene_multithreaded(PathTracedScene scene){
         pthread_create(&threads[t], NULL, run_render_thread, (void*)&thread_args[t]);
     }
     pthread_t draw_thread;
-    if(LIVE_DRAW){
-        pthread_create(&draw_thread, NULL, live_draw_buffer, (void*)&thread_args[0]); // pass it any info struct for now
-    }
+    // if(LIVE_DRAW){
+    //     pthread_create(&draw_thread, NULL, live_draw_buffer, (void*)&thread_args[0]); // pass it any info struct for now
+    // }
     // Join threads
     for(int t = 0; t < num_threads; t++){
         pthread_join(threads[t], NULL);
@@ -375,9 +389,8 @@ void path_trace_scene_multithreaded(PathTracedScene scene){
         pthread_join(draw_thread, NULL);
         draw_buffer = true;
     }
-    else{
-        draw_screen_buffer(scene);
-    }
+    process_output_image(scene);
+    draw_float_buffer(scene.output_buffer, scene.width, scene.height);
 }
 
 void debug_draw_light(PointLight light, Camera cam, double width, double height){

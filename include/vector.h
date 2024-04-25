@@ -211,6 +211,15 @@ Vector3 vec3f_to_vec3(Vector3f v);
  */
 Vector3f vec3f_scale(Vector3f v, double scale);
 
+/**
+ * Adds two 3D vectors.
+ *
+ * @param a The first vector.
+ * @param b The second vector.
+ * @return The sum of the two vectors.
+ */
+Vector3f vec3f_add(Vector3f a, Vector3f b);
+
 
 double* vec3_to_array(Vector3* vec);
 

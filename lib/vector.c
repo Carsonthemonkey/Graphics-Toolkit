@@ -140,6 +140,14 @@ Vector3 vec3f_to_vec3(Vector3f v){
     };
 }
 
+Vector3f vec3f_add(Vector3f a, Vector3f b){
+    Vector3f result;
+    result.x = a.x + b.x;
+    result.y = a.y + b.y;
+    result.z = a.z + b.z;
+    return result;
+}
+
 Vector3f vec3f_scale(Vector3f v, double scale){
     Vector3f result;
     result.x = v.x * scale;
