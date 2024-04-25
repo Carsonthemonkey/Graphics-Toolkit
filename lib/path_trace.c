@@ -182,6 +182,34 @@ Color3 direct_lighting(PathTracedScene scene, Vector3 position, Vector3 surface_
     return direct_light;
 }
 
+double trowbridge_reitz_ggx(Vector3 normal, Vector3 halfway, double a){
+    double d = M_PI * (vec3_dot_prod(normal, halfway) * ((a * a) - 1) + 1);
+    double denom = d * d;
+    return (a * a) / denom;
+}
+
+double geometry_schlick_ggx(double rough, double n_dot_v){
+    double denom = n_dot_v * (1 - rough) + rough;
+    return n_dot_v / denom;
+}
+
+double geometry_smith(Vector3 normal, Vector3 view_vec, Vector3 light_vec, double a){
+    double k = ((a + 1) * (a + 1)) / 8; //* For direct lighting specifically
+    double n_dot_v = fmax(vec3_dot_prod(normal, view_vec), 0.0);
+    double n_dot_l = fmax(vec3_dot_prod(normal, light_vec), 0.0);
+    double ggx_view = geometry_schlick_ggx(n_dot_v, k);
+    double ggx_light = geometry_schlick_ggx(n_dot_l, k);
+    return ggx_light * ggx_view;
+}
+
+double fresnel_schlick(double ior, Vector3 view, Vector3 normal){
+    double f0 = (ior - 1) / (ior + 1);
+    f0 *= f0;
+    double cosx = fabs(vec3_dot_prod(view, normal)); //* In case negative? This may be incorrect
+    double x5 = 1 - cosx;
+    x5 = x5 * x5 * x5 * x5 * x5;
+    return f0 + (1 - f0) * x5;
+}
 
 Color3 path_trace(PathTracedScene scene, Ray ray, int depth, RayHitInfo* first_hit_out){
     Color3 pixel_color = {0, 0, 0};
@@ -205,16 +233,29 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth, RayHitInfo* first_h
         pixel_color = vec3_add(pixel_color, vec3_mult(vec3_mult(direct_lighting(scene, hit_location, hit.normal), mesh.material.base_color), throughput));
         
         /* Indirect Lighting */
+
+        
+
         ray.origin = hit_location;
         if(rand_double() < mesh.material.specular){
             /* Specular Reflection */
+            Vector3 random_dir = vec3_normalized(random_point_in_sphere(1));
+            
             throughput = vec3_mult(throughput, mesh.material.specular_color);
-            Vector3 diffuse_direction;
-            if(mesh.material.roughness > 0) diffuse_direction = vec3_normalized(vec3_add(random_point_in_sphere(1), hit.normal));
-            //TODO: Apparently interpolating the normal instead of the ray direction is better
-            Vector3 reflection = vec3_reflection(ray.direction, hit.normal);
-            Vector3 specular_direction = vec3_normalized(vec3_lerp(reflection, diffuse_direction, mesh.material.roughness));
-            ray.direction = specular_direction;
+            throughput = vec3_scale(throughput, fresnel_schlick(1.33, ray.direction, hit.normal));
+            double fs = fresnel_schlick(1.33, ray.direction, hit.normal);
+            Color3 fs_col = vec3_scale((Color3){fs,fs,fs}, 1);
+            vec3_print(fs_col);
+            return fs_col;
+            pixel_color = (Color3){fs, fs, fs};
+            ray.direction = random_dir;
+            // throughput = vec3_mult(throughput, mesh.material.specular_color);
+            // Vector3 diffuse_direction;
+            // if(mesh.material.roughness > 0) diffuse_direction = vec3_normalized(vec3_add(random_point_in_sphere(1), hit.normal));
+            // //TODO: Apparently interpolating the normal instead of the ray direction is better
+            // Vector3 reflection = vec3_reflection(ray.direction, hit.normal);
+            // Vector3 specular_direction = vec3_normalized(vec3_lerp(reflection, diffuse_direction, mesh.material.roughness));
+            // ray.direction = specular_direction;
         }
         else{
             /* Diffuse */
