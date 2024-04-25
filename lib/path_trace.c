@@ -188,17 +188,21 @@ double trowbridge_reitz_ggx(Vector3 normal, Vector3 halfway, double a){
     return (a * a) / denom;
 }
 
-double geometry_schlick_ggx(double rough, double n_dot_v){
-    double denom = n_dot_v * (1 - rough) + rough;
+double geometry_schlick_ggx(double k, double n_dot_v){
+    double denom = n_dot_v * (1 - k) + k;
     return n_dot_v / denom;
 }
 
 double geometry_smith(Vector3 normal, Vector3 view_vec, Vector3 light_vec, double a){
     double k = ((a + 1) * (a + 1)) / 8; //* For direct lighting specifically
-    double n_dot_v = fmax(vec3_dot_prod(normal, view_vec), 0.0);
+    double n_dot_v = fmax(vec3_dot_prod(normal, vec3_negated(view_vec)), 0.0);
+    printf("%lf\n", vec3_dot_prod(normal, vec3_negated(view_vec)));
     double n_dot_l = fmax(vec3_dot_prod(normal, light_vec), 0.0);
-    double ggx_view = geometry_schlick_ggx(n_dot_v, k);
-    double ggx_light = geometry_schlick_ggx(n_dot_l, k);
+    if(n_dot_v == 0) printf("n_dot_v: %lf, n_dot_l: %lf\n", n_dot_v, n_dot_l);
+    double ggx_view = geometry_schlick_ggx(k, n_dot_v);
+    // if(ggx_view != 0) printf("view is not 0\n");
+    double ggx_light = geometry_schlick_ggx(k, n_dot_l);
+    // if(ggx_light == 0) printf("light is 0\n");
     return ggx_light * ggx_view;
 }
 
