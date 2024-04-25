@@ -195,14 +195,12 @@ double geometry_schlick_ggx(double k, double n_dot_v){
 
 double geometry_smith(Vector3 normal, Vector3 view_vec, Vector3 light_vec, double a){
     double k = ((a + 1) * (a + 1)) / 8; //* For direct lighting specifically
-    double n_dot_v = fmax(vec3_dot_prod(normal, vec3_negated(view_vec)), 0.0);
+    double n_dot_v = fmax(vec3_dot_prod(normal, vec3_negated(view_vec)), 0.0); //? Why does this have to be negated but not in fresnel
     printf("%lf\n", vec3_dot_prod(normal, vec3_negated(view_vec)));
     double n_dot_l = fmax(vec3_dot_prod(normal, light_vec), 0.0);
     if(n_dot_v == 0) printf("n_dot_v: %lf, n_dot_l: %lf\n", n_dot_v, n_dot_l);
     double ggx_view = geometry_schlick_ggx(k, n_dot_v);
-    // if(ggx_view != 0) printf("view is not 0\n");
     double ggx_light = geometry_schlick_ggx(k, n_dot_l);
-    // if(ggx_light == 0) printf("light is 0\n");
     return ggx_light * ggx_view;
 }
 
