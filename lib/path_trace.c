@@ -20,8 +20,8 @@
 #include "buffer.h"
 
 const double EPSILON = 0.000001;
-const int NUM_SHADOW_RAYS = 1;
-const int NUM_CAMERA_RAYS = 128;
+const int NUM_SHADOW_RAYS = 0;
+const int NUM_CAMERA_RAYS = 64;
 const int MAX_DIFFUSE_BOUNCES = 4;
 
 const int DRAW_DELAY_SECONDS = 5;
@@ -203,10 +203,10 @@ double geometry_schlick_ggx(double k, double n_dot_v){
 
 double geometry_smith(Vector3 normal, Vector3 view_vec, Vector3 light_vec, double a){
     double k = ((a + 1) * (a + 1)) / 8; //* For direct lighting specifically
-    double n_dot_v = fmax(vec3_dot_prod(normal, vec3_negated(view_vec)), 0.0); //? Why does this have to be negated but not in fresnel
-    printf("%lf\n", vec3_dot_prod(normal, vec3_negated(view_vec)));
+    double n_dot_v = fmax(vec3_dot_prod(normal, view_vec), 0.0); //? Why does this have to be negated but not in fresnel
+    // printf("%lf\n", vec3_dot_prod(normal, vec3_negated(view_vec)));
     double n_dot_l = fmax(vec3_dot_prod(normal, light_vec), 0.0);
-    if(n_dot_v == 0) printf("n_dot_v: %lf, n_dot_l: %lf\n", n_dot_v, n_dot_l);
+    // if(n_dot_v == 0) printf("n_dot_v: %lf, n_dot_l: %lf\n", n_dot_v, n_dot_l);
     double ggx_view = geometry_schlick_ggx(k, n_dot_v);
     double ggx_light = geometry_schlick_ggx(k, n_dot_l);
     return ggx_light * ggx_view;
@@ -214,23 +214,37 @@ double geometry_smith(Vector3 normal, Vector3 view_vec, Vector3 light_vec, doubl
 
 double fresnel_schlick(double ior, Vector3 view, Vector3 normal){
     double f0 = (ior - 1) / (ior + 1);
+    // double f0 = 0.04; // approximation for dialetrics
     f0 *= f0;
-    double cosx = fabs(vec3_dot_prod(view, normal)); //* In case negative? This may be incorrect
+    double cosx = fmax(vec3_dot_prod(view, normal), 0.0); 
     double x5 = 1 - cosx;
     x5 = x5 * x5 * x5 * x5 * x5;
     return f0 + (1 - f0) * x5;
 }
 
-double cook_torrence_brdf(Vector3 incoming, Vector3 outgoing, Vector3 normal){
+double cook_torrence_brdf(Vector3 view, Vector3 light, Vector3 normal){
     //TODO: add ior to material
-    double fresnel = fresnel_schlick(1.45, incoming, normal);
-    double geometry = geometry_smith(normal, incoming, outgoing, 0.3);
-    double distribution = trowbridge_reitz_ggx(normal, vec3_normalized(vec3_add(normal, outgoing)), 0.3);
+    double fresnel = fresnel_schlick(1.5, view, normal);
+    double geometry = geometry_smith(normal, view, light, 0.99);
+    double distribution = trowbridge_reitz_ggx(normal, vec3_normalized(vec3_add(view, light)), 0.99);
 
-    double n_dot_incoming = vec3_dot_prod(incoming, normal);
-    double n_dot_outgoing = vec3_dot_prod(outgoing, normal);
-    double denom = 4 * n_dot_incoming * n_dot_outgoing;
-    return (fresnel * geometry * distribution) / denom;
+    // printf("f: %lf g: %lf d: %lf\n", fresnel, geometry, distribution);
+
+    double n_dot_view = vec3_dot_prod(view, normal);
+    double n_dot_light = vec3_dot_prod(light, normal);
+    // printf("n_dot_in: %lf, n_dot_out: %lf\n", n_dot_view, n_dot_light);
+    double denom = 4 * n_dot_view * n_dot_light;
+    // printf("result: %lf\n\n",(fresnel * geometry * distribution) / denom);
+
+    double specular = ((fresnel * geometry * distribution) / denom); // ambient for testing
+
+    double ks = fresnel;
+    double kd = 1.0 - fresnel;
+    //TODO: do metallic here
+    // kd *= 1 - 1;
+    double n_dot_l = fmax(vec3_dot_prod(normal, light), 0.0);
+    return (kd * 1 / M_PI + specular) * n_dot_l;
+    //Calculate diffuse component
 }
 
 Color3 path_trace(PathTracedScene scene, Ray ray, int depth, RayHitInfo* first_hit_out){
@@ -258,23 +272,23 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth, RayHitInfo* first_h
         ray.origin = hit_location;
         if(rand_double() < mesh.material.specular){
             /* Specular Reflection */
-            // Vector3 random_dir = vec3_normalized(random_point_in_sphere(1));
-            Vector3 light_dir = vec3_normalized((Vector3){1, 1, -1});
+            Vector3 light_dir = vec3_normalized(vec3_sub(scene.lights[0].position, hit_location));
+            Vector3 view_vec = vec3_negated(ray.direction);
+            Vector3 reflection = vec3_reflection(ray.direction, hit.normal);
+            Vector3 random_dir = vec3_normalized(random_point_in_sphere(1));
+            Vector3 specular_direction = vec3_normalized(vec3_lerp(reflection, random_dir, 0.0));
+
+            if(vec3_dot_prod(hit.normal, random_dir) < 0) random_dir = vec3_negated(random_dir);
             throughput = vec3_mult(throughput, mesh.material.specular_color);
-            throughput = vec3_scale(throughput, fresnel_schlick(1.33, ray.direction, hit.normal));
-            double tr = trowbridge_reitz_ggx(hit.normal,vec3_normalized(vec3_add(hit.normal, light_dir)), 0.1 * 0.1);
-            Color3 tr_col = (Color3){tr, tr, tr};
-            // double fs = fresnel_schlick(1.33, ray.direction, hit.normal);
-            // Color3 fs_col = vec3_scale((Color3){fs,fs,fs}, 1);
-            return tr_col;
-            // ray.direction = random_dir;
-            // throughput = vec3_mult(throughput, mesh.material.specular_color);
-            // Vector3 diffuse_direction;
-            // if(mesh.material.roughness > 0) diffuse_direction = vec3_normalized(vec3_add(random_point_in_sphere(1), hit.normal));
-            // //TODO: Apparently interpolating the normal instead of the ray direction is better
-            // Vector3 reflection = vec3_reflection(ray.direction, hit.normal);
-            // Vector3 specular_direction = vec3_normalized(vec3_lerp(reflection, diffuse_direction, mesh.material.roughness));
-            // ray.direction = specular_direction;
+            double ct = cook_torrence_brdf(view_vec, random_dir, hit.normal);
+            // if(ct > 1) printf("%lf\n", ct);
+            // return vec3_scale((Color3){ct, ct, ct}, 3);
+            // return vec3_scale((Color3){ct, ct, ct}, 3);
+            // double ct = cook_torrence_brdf(view_vec, (Vector3){1,1, 0}, hit.normal);
+            // return (Vector3){ct, ct, ct};
+            throughput = vec3_scale(throughput, ct);
+            // vec3_print(throughput);
+            ray.direction = random_dir;
         }
         else{
             /* Diffuse */
@@ -378,11 +392,11 @@ void process_output_image(PathTracedScene scene){
             }
         }
     }
-
-    if(scene.color_transform != NULL)
-    apply_pixel_filter_to_float_image(scene.output_buffer, scene.color_transform, scene.width, scene.height);
-    if(scene.tonemap != NULL)
-    apply_pixel_filter_to_float_image(scene.output_buffer, scene.tonemap, scene.width, scene.height);
+    
+    // if(scene.color_transform != NULL)
+    // apply_pixel_filter_to_float_image(scene.output_buffer, scene.color_transform, scene.width, scene.height);
+    // if(scene.tonemap != NULL)
+    // apply_pixel_filter_to_float_image(scene.output_buffer, scene.tonemap, scene.width, scene.height);
 }
 
 void clear_screen_buffer(Color3* light_buffer, Color3 color, int width, int height){
