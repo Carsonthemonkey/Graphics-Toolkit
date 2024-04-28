@@ -48,6 +48,7 @@ typedef struct {
     double distance;
     Vector3 normal;
     Mesh intersected_mesh;
+    Vector2 uv_coordinates;
 } RayHitInfo;
 
 /**

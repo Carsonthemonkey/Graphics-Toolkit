@@ -126,9 +126,10 @@ bool raycast(RayHitInfo* out, PathTracedScene scene, Ray ray){
         for(int tr = 0; tr < mesh.num_tris; tr++){
             Triangle tri = mesh.tris[tr];
             Vector2 surface_coords;
-            if(intersect_triangle(&t,(mesh.shade_smooth ? &surface_coords : NULL), closest_t, ray, tri)){
+            if(intersect_triangle(&t,&surface_coords, closest_t, ray, tri)){
                 if(out == NULL) return true;
 
+                out->uv_coordinates = surface_coords;
                 did_hit = true;
                 closest_t = t;
                 out->intersected_mesh = mesh;
@@ -196,7 +197,7 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth, RayHitInfo* first_h
         }
         if(r == 0) *first_hit_out = hit;
         Mesh mesh = hit.intersected_mesh;
-        Vector3 hit_location =  vec3_add(ray.origin, vec3_scale(ray.direction, hit.distance));
+        Vector3 hit_location = vec3_add(ray.origin, vec3_scale(ray.direction, hit.distance));
 
         /* Emissive Materials */
         pixel_color = vec3_add(pixel_color, vec3_mult(throughput, vec3_scale(mesh.material.emissive, mesh.material.emission_strength)));
@@ -218,7 +219,14 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth, RayHitInfo* first_h
         }
         else{
             /* Diffuse */
-            throughput = vec3_mult(throughput, mesh.material.base_color);
+            if(!texture_is_null(mesh.material.albedo_texture)){
+                Vector2 texture_coords = vec2_mult(hit.uv_coordinates, (Vector2){mesh.material.albedo_texture.width, mesh.material.albedo_texture.height});
+                Color3 tex_color = get_texture_color(mesh.material.albedo_texture, texture_coords);
+                throughput = vec3_mult(throughput, tex_color);
+            }
+            else{
+                throughput = vec3_mult(throughput, mesh.material.base_color);
+            }
             // This is the lambertian diffuse model / BRDF
             Vector3 diffuse_direction = vec3_normalized(vec3_add(random_point_in_sphere(1), hit.normal));
             ray.direction = diffuse_direction;

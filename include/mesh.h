@@ -3,6 +3,7 @@
 #include "vector.h"
 #include "camera.h"
 #include "colors.h"
+#include "texture.h"
 
 //TODO: put this in path_trace.h but its causing include errors right now
 typedef struct {
@@ -12,6 +13,7 @@ typedef struct {
     double specular;
     Color3 specular_color;
     double roughness;
+    Texture albedo_texture;
 } PathTracedMaterial;
 
 typedef struct {
