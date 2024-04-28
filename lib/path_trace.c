@@ -129,7 +129,8 @@ bool raycast(RayHitInfo* out, PathTracedScene scene, Ray ray){
             if(intersect_triangle(&t,&surface_coords, closest_t, ray, tri)){
                 if(out == NULL) return true;
 
-                out->uv_coordinates = surface_coords;
+                out->surface_coords = surface_coords;
+                out->intersected_triangle = tri;
                 did_hit = true;
                 closest_t = t;
                 out->intersected_mesh = mesh;
@@ -220,7 +221,17 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth, RayHitInfo* first_h
         else{
             /* Diffuse */
             if(!texture_is_null(mesh.material.albedo_texture)){
-                Vector2 texture_coords = vec2_mult(hit.uv_coordinates, (Vector2){mesh.material.albedo_texture.width, mesh.material.albedo_texture.height});
+                Triangle hit_triangle = hit.intersected_triangle;
+                Vector2 texture_coords;
+                texture_coords.u = hit_triangle.b->uv.u * hit.surface_coords.x +
+                                   hit_triangle.c->uv.u * hit.surface_coords.y +
+                                   hit_triangle.a->uv.u * (1.0 - hit.surface_coords.x - hit.surface_coords.y);
+
+                texture_coords.v = hit_triangle.b->uv.v * hit.surface_coords.x +
+                                   hit_triangle.c->uv.v * hit.surface_coords.y +
+                                   hit_triangle.a->uv.v * (1.0 - hit.surface_coords.x - hit.surface_coords.y);
+                texture_coords = vec2_mult(texture_coords,
+                (Vector2){mesh.material.albedo_texture.width, mesh.material.albedo_texture.height});
                 Color3 tex_color = get_texture_color(mesh.material.albedo_texture, texture_coords);
                 throughput = vec3_mult(throughput, tex_color);
             }
