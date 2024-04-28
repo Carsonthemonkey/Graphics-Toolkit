@@ -19,6 +19,7 @@ typedef struct {
 typedef struct {
     Vector3 position;
     Vector3 normal;
+    Vector2 uv;
 } Vertex;
 
 typedef struct {
