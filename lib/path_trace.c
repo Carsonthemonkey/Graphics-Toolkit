@@ -202,7 +202,7 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth, RayHitInfo* first_h
         pixel_color = vec3_add(pixel_color, vec3_mult(throughput, vec3_scale(mesh.material.emissive, mesh.material.emission_strength)));
 
         /* Direct Lighting */
-        pixel_color = vec3_add(pixel_color, vec3_mult(vec3_mult(direct_lighting(scene, hit_location, hit.normal), mesh.material.base_color), throughput));
+        // pixel_color = vec3_add(pixel_color, vec3_mult(vec3_mult(direct_lighting(scene, hit_location, hit.normal), mesh.material.base_color), throughput));
         
         /* Indirect Lighting */
         ray.origin = hit_location;
