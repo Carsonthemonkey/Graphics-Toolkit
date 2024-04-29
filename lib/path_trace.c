@@ -18,6 +18,7 @@
 #include "random.h"
 #include "denoise.h"
 #include "buffer.h"
+#include "material.h"
 
 const double EPSILON = 0.000001;
 const int NUM_SHADOW_RAYS = 1;
@@ -220,24 +221,8 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth, RayHitInfo* first_h
         }
         else{
             /* Diffuse */
-            if(!texture_is_null(mesh.material.albedo_texture)){
-                Triangle hit_triangle = hit.intersected_triangle;
-                Vector2 texture_coords;
-                texture_coords.u = hit_triangle.b->uv.u * hit.surface_coords.x +
-                                   hit_triangle.c->uv.u * hit.surface_coords.y +
-                                   hit_triangle.a->uv.u * (1.0 - hit.surface_coords.x - hit.surface_coords.y);
-
-                texture_coords.v = hit_triangle.b->uv.v * hit.surface_coords.x +
-                                   hit_triangle.c->uv.v * hit.surface_coords.y +
-                                   hit_triangle.a->uv.v * (1.0 - hit.surface_coords.x - hit.surface_coords.y);
-                texture_coords = vec2_mult(texture_coords,
-                (Vector2){mesh.material.albedo_texture.width, mesh.material.albedo_texture.height});
-                Color3 tex_color = get_texture_color(mesh.material.albedo_texture, texture_coords);
-                throughput = vec3_mult(throughput, tex_color);
-            }
-            else{
-                throughput = vec3_mult(throughput, mesh.material.base_color);
-            }
+            Color3 albedo_color = get_albedo_color(mesh.material, hit);
+            throughput = vec3_mult(throughput, albedo_color);
             // This is the lambertian diffuse model / BRDF
             Vector3 diffuse_direction = vec3_normalized(vec3_add(random_point_in_sphere(1), hit.normal));
             ray.direction = diffuse_direction;

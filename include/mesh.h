@@ -5,7 +5,7 @@
 #include "colors.h"
 #include "texture.h"
 
-//TODO: put this in path_trace.h but its causing include errors right now
+//TODO: put this in material.h but its causing include errors right now
 typedef struct {
     Color3 base_color;
     Color3 emissive;
