@@ -209,24 +209,30 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth, RayHitInfo* first_h
         
         /* Indirect Lighting */
         ray.origin = hit_location;
+        // Correct for specular vs diffuse bias (?)
+        double ray_probability;
         if(rand_double() < mesh.material.specular){
             /* Specular Reflection */
+            ray_probability = 1.0 / mesh.material.specular;
             throughput = vec3_mult(throughput, mesh.material.specular_color);
             Vector3 diffuse_direction;
             if(mesh.material.roughness > 0) diffuse_direction = vec3_normalized(vec3_add(random_point_in_sphere(1), hit.normal));
-            //TODO: Apparently interpolating the normal instead of the ray direction is better
+            //TODO: Apparently interpolating the normal instead of the ray direction is better (Update, I can't remember where I heard this, but I am pretty sure it is true)
             Vector3 reflection = vec3_reflection(ray.direction, hit.normal);
             Vector3 specular_direction = vec3_normalized(vec3_lerp(reflection, diffuse_direction, mesh.material.roughness));
             ray.direction = specular_direction;
         }
         else{
             /* Diffuse */
+            ray_probability = 1.0 - mesh.material.specular;
             Color3 albedo_color = get_albedo_color(mesh.material, hit);
             throughput = vec3_mult(throughput, albedo_color);
+
             // This is the lambertian diffuse model / BRDF
             Vector3 diffuse_direction = vec3_normalized(vec3_add(random_point_in_sphere(1), hit.normal));
             ray.direction = diffuse_direction;
         }
+        throughput = vec3_scale(throughput, ray_probability);
         // Russian Roulette ray termination
         double ray_strength = fmax(fmax(throughput.r, throughput.g), throughput.b);
         if(rand_double() > ray_strength) break;
