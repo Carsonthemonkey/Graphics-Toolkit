@@ -206,8 +206,11 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth, RayHitInfo* first_h
         
         /* Indirect Lighting */
         ray.origin = hit_location;
+        // Correct for specular vs diffuse bias (?)
+        double ray_probability;
         if(rand_double() < mesh.material.specular){
             /* Specular Reflection */
+            ray_probability = 1.0 / mesh.material.specular;
             throughput = vec3_mult(throughput, mesh.material.specular_color);
             Vector3 diffuse_direction;
             if(mesh.material.roughness > 0) diffuse_direction = vec3_normalized(vec3_add(random_point_in_sphere(1), hit.normal));
@@ -218,6 +221,7 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth, RayHitInfo* first_h
         }
         else{
             /* Diffuse */
+            ray_probability = 1.0 - mesh.material.specular;
             throughput = vec3_mult(throughput, mesh.material.base_color);
             // This is the lambertian diffuse model / BRDF
             Vector3 diffuse_direction = vec3_normalized(vec3_add(random_point_in_sphere(1), hit.normal));
