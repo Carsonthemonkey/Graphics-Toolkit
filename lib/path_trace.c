@@ -227,6 +227,7 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth, RayHitInfo* first_h
             Vector3 diffuse_direction = vec3_normalized(vec3_add(random_point_in_sphere(1), hit.normal));
             ray.direction = diffuse_direction;
         }
+        throughput = vec3_scale(throughput, ray_probability);
         // Russian Roulette ray termination
         double ray_strength = fmax(fmax(throughput.r, throughput.g), throughput.b);
         if(rand_double() > ray_strength) break;
