@@ -22,6 +22,6 @@ Color3 sample_lambertian(Vector3 surface_normal, PathTracedMaterial material_unu
 // not sure if this is generalizable to all BRDFs
 double pdf_lambertian(double n_dot_l);
 
-Color3 eval_indirect_lambertian(double* sample_weight, Vector3 surface_normal, PathTracedMaterial material);
+Color3 eval_indirect_lambertian(Color3* sample_weight, Vector3 surface_normal, PathTracedMaterial material);
 
 #endif
