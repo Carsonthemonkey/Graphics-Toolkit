@@ -3,16 +3,7 @@
 #include "vector.h"
 #include "camera.h"
 #include "colors.h"
-
-//TODO: put this in path_trace.h but its causing include errors right now
-typedef struct {
-    Color3 base_color;
-    Color3 emissive;
-    double emission_strength;
-    double specular;
-    Color3 specular_color;
-    double roughness;
-} PathTracedMaterial;
+#include "material.h"
 
 typedef struct {
     Vector3 position;
