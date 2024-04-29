@@ -11,6 +11,7 @@ typedef struct {
     Color3 emissive;
     double emission_strength;
     double specular;
+    double ior;
     Color3 specular_color;
     double roughness;
     Texture albedo_texture;

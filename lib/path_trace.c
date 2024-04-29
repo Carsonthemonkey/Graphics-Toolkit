@@ -185,6 +185,16 @@ Color3 direct_lighting(PathTracedScene scene, Vector3 position, Vector3 surface_
     return direct_light;
 }
 
+double fresnel_schlick(double ior, Vector3 view, Vector3 normal, double r0){
+    double f0 = (ior - 1) / (ior + 1);
+    // double f0 = 0.04; // approximation for dialetrics
+    f0 *= f0;
+    double cosx = fmax(vec3_dot_prod(view, normal), 0.0); 
+    double x5 = 1 - cosx;
+    x5 = x5 * x5 * x5 * x5 * x5;
+    double ref = f0 + (1 - f0) * x5;
+    return r0 + (1.0 - r0) * ref;
+}
 
 Color3 path_trace(PathTracedScene scene, Ray ray, int depth, RayHitInfo* first_hit_out){
     Color3 pixel_color = {0, 0, 0};
@@ -223,9 +233,12 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth, RayHitInfo* first_h
         ray.origin = hit_location;
         // Correct for specular vs diffuse bias (?)
         double ray_probability;
-        if(rand_double() < mesh.material.specular){
+        double specular_chance = mesh.material.specular;
+        Vector3 view_vec = vec3_negated(ray.direction);
+        if(specular_chance > 0) specular_chance = fresnel_schlick(mesh.material.ior, view_vec, hit.normal, mesh.material.specular);
+        if(rand_double() < specular_chance){
             /* Specular Reflection */
-            ray_probability = 1.0 / mesh.material.specular;
+            ray_probability = 1.0 / specular_chance;
             throughput = vec3_mult(throughput, mesh.material.specular_color);
             Vector3 diffuse_direction;
             if(mesh.material.roughness > 0) diffuse_direction = vec3_normalized(vec3_add(random_point_in_sphere(1), hit.normal));
@@ -236,7 +249,7 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth, RayHitInfo* first_h
         }
         else{
             /* Diffuse */
-            ray_probability = 1.0 - mesh.material.specular;
+            ray_probability = 1.0 - specular_chance;
             Color3 albedo_color = get_albedo_color(mesh.material, hit);
             throughput = vec3_mult(throughput, albedo_color);
 
