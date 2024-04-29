@@ -18,6 +18,7 @@
 #include "random.h"
 #include "denoise.h"
 #include "buffer.h"
+#include "material.h"
 
 const double EPSILON = 0.000001;
 const int NUM_SHADOW_RAYS = 1;
@@ -218,10 +219,11 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth, RayHitInfo* first_h
         }
         else{
             /* Diffuse */
-            throughput = vec3_mult(throughput, mesh.material.base_color);
-            // This is the lambertian diffuse model / BRDF
-            Vector3 diffuse_direction = vec3_normalized(vec3_add(random_point_in_sphere(1), hit.normal));
-            ray.direction = diffuse_direction;
+            Vector3 view_vec = vec3_negated(ray.direction);
+            Color3 sample_weight;
+            Vector3 sample_dir = eval_indirect_lambertian(&sample_weight, hit.normal, mesh.material);
+            throughput = vec3_mult(throughput, sample_weight);
+            ray.direction = sample_dir;
         }
         // Russian Roulette ray termination
         double ray_strength = fmax(fmax(throughput.r, throughput.g), throughput.b);
