@@ -18,10 +18,11 @@
 #include "random.h"
 #include "denoise.h"
 #include "buffer.h"
+#include "material.h"
 
 const double EPSILON = 0.000001;
 const int NUM_SHADOW_RAYS = 1;
-const int NUM_CAMERA_RAYS = 128;
+const int NUM_CAMERA_RAYS = 256;
 const int MAX_DIFFUSE_BOUNCES = 4;
 
 const int DRAW_DELAY_SECONDS = 5;
@@ -126,9 +127,11 @@ bool raycast(RayHitInfo* out, PathTracedScene scene, Ray ray){
         for(int tr = 0; tr < mesh.num_tris; tr++){
             Triangle tri = mesh.tris[tr];
             Vector2 surface_coords;
-            if(intersect_triangle(&t,(mesh.shade_smooth ? &surface_coords : NULL), closest_t, ray, tri)){
+            if(intersect_triangle(&t,&surface_coords, closest_t, ray, tri)){
                 if(out == NULL) return true;
 
+                out->surface_coords = surface_coords;
+                out->intersected_triangle = tri;
                 did_hit = true;
                 closest_t = t;
                 out->intersected_mesh = mesh;
@@ -191,12 +194,24 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth, RayHitInfo* first_h
         bool did_hit = raycast(&hit, scene, ray);
         if(!did_hit){
             // Environment lighting goes here
-            pixel_color = vec3_add(pixel_color, (Color3){BLACK});
+            if(texture_is_null(scene.environment)){
+                pixel_color = vec3_add(pixel_color, (Color3){BLACK});
+            }
+            else{
+                Vector2 uv;
+                double phi = atan2(ray.direction.z, ray.direction.x); //offset by 90 degrees
+                double theta = acos(ray.direction.y);
+                uv.u = 1.0 - (phi + M_PI) / (2.0 * M_PI);
+                uv.v = theta / M_PI;
+                uv = vec2_mult(uv, (Vector2){scene.environment.width, scene.environment.height});
+                // throughput = vec3_mult(vec3_scale(get_texture_color(scene.environment, uv), scene.environment_intensity);
+                pixel_color = vec3_add(pixel_color, vec3_mult(throughput, vec3_scale(get_texture_color(scene.environment, uv), scene.environment_intensity)));
+            }
             break;
         }
         if(r == 0) *first_hit_out = hit;
         Mesh mesh = hit.intersected_mesh;
-        Vector3 hit_location =  vec3_add(ray.origin, vec3_scale(ray.direction, hit.distance));
+        Vector3 hit_location = vec3_add(ray.origin, vec3_scale(ray.direction, hit.distance));
 
         /* Emissive Materials */
         pixel_color = vec3_add(pixel_color, vec3_mult(throughput, vec3_scale(mesh.material.emissive, mesh.material.emission_strength)));
@@ -222,7 +237,9 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth, RayHitInfo* first_h
         else{
             /* Diffuse */
             ray_probability = 1.0 - mesh.material.specular;
-            throughput = vec3_mult(throughput, mesh.material.base_color);
+            Color3 albedo_color = get_albedo_color(mesh.material, hit);
+            throughput = vec3_mult(throughput, albedo_color);
+
             // This is the lambertian diffuse model / BRDF
             Vector3 diffuse_direction = vec3_normalized(vec3_add(random_point_in_sphere(1), hit.normal));
             ray.direction = diffuse_direction;

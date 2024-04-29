@@ -39,6 +39,9 @@ void load_mesh_from_ply(Mesh* mesh, char* filename){
     // repeat until end_header
     // malloc space for vertices and tris
     // Read in points
+    bool vertex_normals = false;
+    bool uv_coordinates = false;
+
     mesh->num_vertices = -1;
     mesh->num_tris = -1;
     char line[BUFFER_SIZE];
@@ -55,7 +58,21 @@ void load_mesh_from_ply(Mesh* mesh, char* filename){
     while(fgets(line, BUFFER_SIZE, f) && (mesh->num_vertices ==  -1 || mesh->num_tris == -1)){
         token = strtok(line, " ");
         // Find the number of faces and vertices
-        
+        if(!strcmp(token, "property")){
+            strtok(NULL, " ");
+            char* property = strtok(NULL, " \n");
+            switch(property[0]){
+                case 'n':
+                    vertex_normals = true;
+                    break;
+                case 's':
+                    uv_coordinates = true;
+                    break;
+                case 't': 
+                    uv_coordinates = true;
+                    break;
+            }
+        }
         if(strcmp(token, "element")) continue;
         else{
             char* element_type = strtok(NULL, " ");
@@ -100,12 +117,20 @@ void load_mesh_from_ply(Mesh* mesh, char* filename){
         mesh->vertices[i].position.z = strtod(token, NULL);
         
         //Read normals
-        token = strtok(NULL, "\n\r\t ");
-        mesh->vertices[i].normal.x = strtod(token, NULL);
-        token = strtok(NULL, "\n\r\t ");
-        mesh->vertices[i].normal.y = strtod(token, NULL);
-        token = strtok(NULL, "\n\r\t ");
-        mesh->vertices[i].normal.z = strtod(token, NULL);
+        if(vertex_normals){
+            token = strtok(NULL, "\n\r\t ");
+            mesh->vertices[i].normal.x = strtod(token, NULL);
+            token = strtok(NULL, "\n\r\t ");
+            mesh->vertices[i].normal.y = strtod(token, NULL);
+            token = strtok(NULL, "\n\r\t ");
+            mesh->vertices[i].normal.z = strtod(token, NULL);
+        }
+        if(uv_coordinates){
+            token = strtok(NULL, "\n\r\t ");
+            mesh->vertices[i].uv.u = strtod(token, NULL);
+            token = strtok(NULL, "\n\r\t ");
+            mesh->vertices[i].uv.v = strtod(token, NULL);
+        }
         i++;
     }
     i = 0;

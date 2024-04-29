@@ -6,6 +6,7 @@
 #include "camera.h"
 #include "colors.h"
 #include "mesh.h"
+#include "texture.h"
 
 typedef struct {
     Vector3 position;
@@ -30,6 +31,8 @@ typedef struct {
     Mesh* meshes;
     int num_lights;
     PointLight* lights; //TODO: make this work nice with different light types
+    double environment_intensity;
+    Texture environment; //TODO: make this work with HDR images
 
     // Post processing
     bool denoise;
@@ -48,6 +51,8 @@ typedef struct {
     double distance;
     Vector3 normal;
     Mesh intersected_mesh;
+    Triangle intersected_triangle;
+    Vector2 surface_coords;
 } RayHitInfo;
 
 /**

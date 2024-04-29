@@ -3,8 +3,9 @@
 #include "vector.h"
 #include "camera.h"
 #include "colors.h"
+#include "texture.h"
 
-//TODO: put this in path_trace.h but its causing include errors right now
+//TODO: put this in material.h but its causing include errors right now
 typedef struct {
     Color3 base_color;
     Color3 emissive;
@@ -12,11 +13,13 @@ typedef struct {
     double specular;
     Color3 specular_color;
     double roughness;
+    Texture albedo_texture;
 } PathTracedMaterial;
 
 typedef struct {
     Vector3 position;
     Vector3 normal;
+    Vector2 uv;
 } Vertex;
 
 typedef struct {
