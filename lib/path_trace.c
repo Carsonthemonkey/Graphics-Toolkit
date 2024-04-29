@@ -214,7 +214,7 @@ Color3 path_trace(PathTracedScene scene, Ray ray, int depth, RayHitInfo* first_h
             throughput = vec3_mult(throughput, mesh.material.specular_color);
             Vector3 diffuse_direction;
             if(mesh.material.roughness > 0) diffuse_direction = vec3_normalized(vec3_add(random_point_in_sphere(1), hit.normal));
-            //TODO: Apparently interpolating the normal instead of the ray direction is better
+            //TODO: Apparently interpolating the normal instead of the ray direction is better (Update, I can't remember where I heard this, but I am pretty sure it is true)
             Vector3 reflection = vec3_reflection(ray.direction, hit.normal);
             Vector3 specular_direction = vec3_normalized(vec3_lerp(reflection, diffuse_direction, mesh.material.roughness));
             ray.direction = specular_direction;
